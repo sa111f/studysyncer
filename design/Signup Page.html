@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>StudySyncer — Sign up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f0e6;--bg-2:#ede6d5;--surface:#fbf7ec;--surface-2:#ffffff;--hover:#efe9da;
+    --ink:#2a221a;--ink-2:#4a3f30;--ink-3:#8a7c66;--ink-faint:#c4b89e;
+    --rule:rgba(60,45,25,0.12);--rule-soft:rgba(60,45,25,0.06);
+    --phys-a:#ff8d6b;--phys-b:#ffb8a0;--phys-ink:#7a2e15;
+    --cs-a:#6db58c;--cs-b:#a9d9ba;--cs-ink:#1f4a30;
+    --eng-a:#e9b75a;--eng-b:#f4d28e;--eng-ink:#6a4810;
+    --phil-a:#a98ed4;--phil-b:#cfbce8;--phil-ink:#422968;
+    --serif:'Newsreader','Iowan Old Style',Georgia,serif;
+    --sans:'Inter',-apple-system,system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;-webkit-font-smoothing:antialiased;min-height:100vh;}
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0;}
+  a{color:inherit;}
+
+  .page{
+    min-height:100vh;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    background:
+      radial-gradient(1100px 600px at 0% 100%,rgba(109,181,140,0.20),transparent 60%),
+      radial-gradient(900px 500px at 100% 0%,rgba(233,183,90,0.18),transparent 65%),
+      var(--bg);
+  }
+
+  /* Left form */
+  .form-wrap{
+    background:var(--surface);
+    display:flex;align-items:center;justify-content:center;
+    padding:40px 48px;
+    border-right:1px solid var(--rule-soft);
+    position:relative;
+  }
+  .brand-corner{position:absolute;top:32px;left:48px;display:flex;align-items:center;gap:10px;font-family:var(--serif);font-weight:600;font-size:18px;color:var(--ink);}
+  .brand-mark{
+    width:28px;height:28px;border-radius:8px;
+    background:linear-gradient(135deg,var(--phys-a),var(--phil-a));
+    color:white;display:grid;place-items:center;
+    font-family:var(--serif);font-style:italic;font-size:15px;font-weight:500;
+  }
+  .brand-corner .x{color:var(--phys-ink);font-style:italic;font-weight:500;}
+
+  .form-card{
+    width:100%;max-width:420px;
+  }
+  .form-eyebrow{font-size:11.5px;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;margin-bottom:6px;}
+  .form-title{font-family:var(--serif);font-size:36px;font-weight:500;letter-spacing:-0.025em;line-height:1.1;color:var(--ink);margin:0 0 6px;}
+  .form-title .em{font-style:italic;color:var(--phys-ink);}
+  .form-sub{font-family:var(--serif);font-size:15px;font-style:italic;color:var(--ink-2);margin:0 0 24px;}
+
+  .oauth{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;}
+  .oauth button{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    padding:11px 14px;border-radius:11px;
+    background:var(--surface-2);
+    border:1px solid var(--rule);
+    font-size:13.5px;font-weight:500;color:var(--ink);
+  }
+  .oauth button:hover{background:var(--hover);border-color:var(--ink-faint);}
+  .oauth svg{width:16px;height:16px;}
+  .divider{display:flex;align-items:center;gap:10px;margin:6px 0 18px;font-size:11px;color:var(--ink-3);font-family:var(--mono);text-transform:uppercase;letter-spacing:0.06em;}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--rule);}
+
+  .name-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+  .field label{font-size:11.5px;color:var(--ink-2);font-weight:600;letter-spacing:0.02em;}
+  .field .control{position:relative;display:flex;align-items:center;background:var(--surface-2);border:1px solid var(--rule);border-radius:11px;transition:all 150ms;}
+  .field .control:focus-within{border-color:var(--cs-ink);box-shadow:0 0 0 3px rgba(31,74,48,0.08);}
+  .field input{flex:1;background:transparent;border:none;outline:none;padding:11px 14px;font-family:var(--sans);font-size:14px;color:var(--ink);}
+  .field input::placeholder{color:var(--ink-3);font-family:var(--serif);font-style:italic;}
+  .field .toggle-eye{padding:0 12px;color:var(--ink-3);height:100%;display:grid;place-items:center;}
+  .field .toggle-eye:hover{color:var(--ink);}
+  .field .hint{font-size:11px;color:var(--ink-3);font-family:var(--mono);margin-top:1px;}
+
+  /* Strength meter */
+  .strength{margin-top:6px;}
+  .strength-bar{height:3px;background:var(--rule);border-radius:999px;overflow:hidden;display:flex;gap:2px;}
+  .strength-bar i{flex:1;background:var(--rule);border-radius:999px;transition:background 200ms;}
+  .strength-bar i.on1{background:var(--phys-a);}
+  .strength-bar i.on2{background:var(--eng-a);}
+  .strength-bar i.on3{background:var(--cs-a);}
+  .strength-label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-top:4px;}
+
+  .check-row{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--ink-2);cursor:pointer;line-height:1.45;margin:14px 0 18px;}
+  .check-row input{appearance:none;width:16px;height:16px;border:1.5px solid var(--ink-faint);border-radius:5px;background:var(--surface-2);cursor:pointer;position:relative;flex-shrink:0;margin-top:2px;}
+  .check-row input:checked{background:var(--ink);border-color:var(--ink);}
+  .check-row input:checked::after{content:"✓";position:absolute;inset:0;display:grid;place-items:center;color:var(--surface);font-size:11px;}
+  .check-row a{color:var(--cs-ink);font-weight:500;text-decoration:none;}
+  .check-row a:hover{text-decoration:underline;}
+
+  .submit{
+    width:100%;padding:13px 16px;
+    background:var(--ink);color:var(--surface);
+    border-radius:11px;font-size:14px;font-weight:500;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .submit:hover{background:#1a140e;}
+  .submit .arrow{transition:transform 200ms;}
+  .submit:hover .arrow{transform:translateX(2px);}
+
+  .switch{margin-top:18px;text-align:center;font-size:13px;color:var(--ink-3);}
+  .switch a{color:var(--cs-ink);font-weight:500;text-decoration:none;}
+  .switch a:hover{text-decoration:underline;}
+
+  /* Right panel */
+  .panel{position:relative;padding:40px 48px;display:flex;flex-direction:column;overflow:hidden;}
+  .panel-body{margin-top:auto;margin-bottom:auto;max-width:480px;}
+  .quote-eyebrow{font-size:11px;color:var(--ink-3);letter-spacing:0.1em;text-transform:uppercase;font-weight:600;margin-bottom:18px;}
+  .quote{font-family:var(--serif);font-size:42px;font-weight:500;letter-spacing:-0.02em;line-height:1.15;color:var(--ink);margin:0 0 16px;}
+  .quote .em{font-style:italic;color:var(--cs-ink);}
+  .quote .em2{font-style:italic;color:var(--phil-ink);}
+  .quote-sub{font-family:var(--serif);font-size:18px;font-style:italic;color:var(--ink-2);line-height:1.45;margin:0 0 32px;}
+
+  /* Feature list */
+  .features{display:flex;flex-direction:column;gap:12px;}
+  .feat{
+    display:flex;align-items:flex-start;gap:14px;
+    padding:14px 16px;
+    background:rgba(255,255,255,0.55);
+    backdrop-filter:blur(4px);
+    border:1px solid rgba(255,255,255,0.7);
+    border-radius:13px;
+    box-shadow:0 4px 12px -8px rgba(60,45,25,0.18);
+  }
+  .feat .ic{
+    width:32px;height:32px;flex-shrink:0;
+    border-radius:9px;
+    display:grid;place-items:center;
+    color:white;
+  }
+  .feat.a .ic{background:linear-gradient(135deg,var(--phys-a),var(--phys-b));}
+  .feat.b .ic{background:linear-gradient(135deg,var(--cs-a),var(--cs-b));}
+  .feat.c .ic{background:linear-gradient(135deg,var(--phil-a),var(--phil-b));}
+  .feat.d .ic{background:linear-gradient(135deg,var(--eng-a),var(--eng-b));}
+  .feat .ic svg{width:15px;height:15px;}
+  .feat-body .h{font-family:var(--serif);font-size:15px;font-weight:500;color:var(--ink);letter-spacing:-0.01em;margin-bottom:1px;}
+  .feat-body .h em{font-style:italic;color:var(--ink-2);font-weight:400;}
+  .feat-body .s{font-size:12.5px;color:var(--ink-3);}
+
+  .panel-foot{margin-top:24px;font-size:12px;color:var(--ink-3);font-family:var(--mono);}
+
+  @media (max-width:880px){
+    .page{grid-template-columns:1fr;}
+    .panel{display:none;}
+    .form-wrap{border-right:none;}
+    .brand-corner{position:relative;top:0;left:0;margin-bottom:24px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- Left form -->
+  <main class="form-wrap">
+    <div class="brand-corner">
+      <div class="brand-mark">S</div>
+      Study<span class="x">Syncer</span>
+    </div>
+
+    <div class="form-card">
+      <div class="form-eyebrow">Get started</div>
+      <h2 class="form-title">Build the <span class="em">study habit.</span></h2>
+      <p class="form-sub">Free for students. No credit card needed.</p>
+
+      <div class="oauth">
+        <button>
+          <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Sign up with Google
+        </button>
+        <button>
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.365 1.43c0 1.14-.43 2.25-1.21 3.07-.85.91-2.27 1.6-3.41 1.51-.13-1.13.43-2.27 1.16-3.04.86-.95 2.39-1.66 3.46-1.54zm4.16 16.42c-.59 1.37-.87 1.98-1.62 3.18-1.05 1.68-2.52 3.78-4.36 3.79-1.62.02-2.04-1.08-4.24-1.07-2.2.01-2.66 1.09-4.28 1.07-1.84-.02-3.24-1.91-4.29-3.59-2.93-4.69-3.24-10.19-1.43-13.12 1.28-2.08 3.31-3.3 5.21-3.3 1.94 0 3.16 1.07 4.77 1.07 1.56 0 2.51-1.07 4.76-1.07 1.69 0 3.49.92 4.77 2.51-4.19 2.3-3.51 8.31.71 10.53z"/></svg>
+          Sign up with Apple
+        </button>
+      </div>
+
+      <div class="divider">or</div>
+
+      <form>
+        <div class="name-row">
+          <div class="field">
+            <label for="first">First name</label>
+            <div class="control"><input id="first" type="text" placeholder="Saal" autocomplete="given-name"/></div>
+          </div>
+          <div class="field">
+            <label for="last">Last name</label>
+            <div class="control"><input id="last" type="text" placeholder="Maharaj" autocomplete="family-name"/></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="email">University email</label>
+          <div class="control">
+            <input id="email" type="email" placeholder="you@university.edu" autocomplete="email"/>
+          </div>
+          <span class="hint">We'll use this to verify you're a student.</span>
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="control">
+            <input id="password" type="password" placeholder="At least 8 characters" autocomplete="new-password"/>
+            <button type="button" class="toggle-eye" aria-label="Show password">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.2"/></svg>
+            </button>
+          </div>
+          <div class="strength">
+            <div class="strength-bar"><i class="on1"></i><i class="on2"></i><i class="on3"></i><i></i></div>
+            <div class="strength-label"><span>Strong</span><span>letters · numbers · 8+</span></div>
+          </div>
+        </div>
+
+        <label class="check-row">
+          <input type="checkbox"/>
+          <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</span>
+        </label>
+
+        <button type="submit" class="submit">
+          Create my account
+          <svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+        </button>
+      </form>
+
+      <div class="switch">
+        Already have an account? <a href="Login Page.html">Log in</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Right panel -->
+  <aside class="panel">
+    <div class="panel-body">
+      <div class="quote-eyebrow">What you'll get</div>
+      <h1 class="quote">A <span class="em">calm corner</span> for everything you have to <span class="em2">study.</span></h1>
+      <p class="quote-sub">Tasks, exams, and study sessions in one warm place — designed to keep the panic out of finals week.</p>
+
+      <div class="features">
+        <div class="feat a">
+          <div class="ic">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 4h10M3 8h10M3 12h7"/></svg>
+          </div>
+          <div class="feat-body">
+            <div class="h">Tasks <em>— grouped by what's due when</em></div>
+            <div class="s">Today, this week, overdue. Course-coded, never overwhelming.</div>
+          </div>
+        </div>
+
+        <div class="feat b">
+          <div class="ic">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>
+          </div>
+          <div class="feat-body">
+            <div class="h">Pomodoro focus sessions</div>
+            <div class="s">Built-in timer logs every minute against the right course.</div>
+          </div>
+        </div>
+
+        <div class="feat c">
+          <div class="ic">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>
+          </div>
+          <div class="feat-body">
+            <div class="h">Exam countdowns <em>— with readiness</em></div>
+            <div class="s">See how prepared you are for each exam, not just the date.</div>
+          </div>
+        </div>
+
+        <div class="feat d">
+          <div class="ic">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12 L6 8 L9 11 L14 5"/></svg>
+          </div>
+          <div class="feat-body">
+            <div class="h">Tracker <em>— see where the hours go</em></div>
+            <div class="s">Daily, weekly, monthly views. Streaks and peak hours included.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-foot">⌘K to search · N for new task · ↵ to focus</div>
+  </aside>
+
+</div>
+
+<script>
+  document.querySelectorAll('.toggle-eye').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const inp=btn.parentElement.querySelector('input');
+      inp.type=inp.type==='password'?'text':'password';
+    });
+  });
+</script>
+
+</body>
+</html>

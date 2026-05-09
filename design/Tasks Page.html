@@ -1,0 +1,856 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>StudySyncer — Tasks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:           #f5f0e6;
+    --bg-2:         #ede6d5;
+    --surface:      #fbf7ec;
+    --surface-2:    #ffffff;
+    --hover:        #efe9da;
+
+    --ink:          #2a221a;
+    --ink-2:        #4a3f30;
+    --ink-3:        #8a7c66;
+    --ink-faint:    #c4b89e;
+    --rule:         rgba(60, 45, 25, 0.12);
+    --rule-soft:    rgba(60, 45, 25, 0.06);
+
+    --phys-a:       #ff8d6b;
+    --phys-b:       #ffb8a0;
+    --phys-ink:     #7a2e15;
+
+    --cs-a:         #6db58c;
+    --cs-b:         #a9d9ba;
+    --cs-ink:       #1f4a30;
+
+    --eng-a:        #e9b75a;
+    --eng-b:        #f4d28e;
+    --eng-ink:      #6a4810;
+
+    --phil-a:       #a98ed4;
+    --phil-b:       #cfbce8;
+    --phil-ink:     #422968;
+
+    --space-a:      var(--cs-a);
+    --space-b:      var(--cs-b);
+    --space-ink:    var(--cs-ink);
+
+    --serif: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+    --sans:  'Inter', -apple-system, system-ui, sans-serif;
+    --mono:  'JetBrains Mono', ui-monospace, monospace;
+
+    --t: 220ms cubic-bezier(0.32, 0.72, 0.24, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; padding: 0; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 248px 1fr;
+    min-height: 100vh;
+    padding: 10px;
+    gap: 10px;
+    background:
+      radial-gradient(1100px 600px at 0% 0%, rgba(169,142,212,0.18), transparent 60%),
+      radial-gradient(900px 500px at 100% 100%, rgba(109,181,140,0.15), transparent 65%),
+      var(--bg);
+  }
+
+  /* Sidebar — same as dashboard */
+  .sidebar {
+    background: linear-gradient(170deg, var(--space-a) 0%, var(--space-b) 60%, transparent 110%), var(--bg-2);
+    border-radius: 16px;
+    padding: 16px 12px;
+    display: flex; flex-direction: column; gap: 4px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4), 0 1px 2px rgba(60,45,25,0.04);
+    color: var(--space-ink);
+  }
+  .ws { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+  .ws:hover { background: rgba(255,255,255,0.4); }
+  .ws-icon { width: 26px; height: 26px; border-radius: 8px; background: rgba(255,255,255,0.65); color: var(--space-ink); display: grid; place-items: center; font-family: var(--serif); font-weight: 600; font-size: 14px; }
+  .ws-name { flex: 1; font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
+  .ws-chev { color: var(--ink-3); font-size: 11px; opacity: 0.7; }
+
+  .cmd { display: flex; align-items: center; gap: 8px; padding: 7px 11px; border-radius: 10px; background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7); color: var(--ink-2); font-size: 12.5px; margin-bottom: 14px; cursor: text; }
+  .cmd:hover { background: rgba(255,255,255,0.8); }
+  .cmd .ic { width: 13px; height: 13px; opacity: 0.7; flex-shrink: 0; }
+  .cmd .placeholder { flex: 1; color: var(--ink-3); }
+  .cmd .kbd { font-family: var(--mono); font-size: 10px; padding: 1px 6px; background: rgba(255,255,255,0.7); border-radius: 4px; color: var(--ink-2); border: 1px solid var(--rule-soft); }
+
+  .nav-label { font-size: 10.5px; color: var(--ink-3); padding: 12px 12px 4px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .pinned { display: flex; flex-direction: column; gap: 1px; }
+  .pin { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; font-size: 13px; color: var(--ink-2); cursor: pointer; transition: background 120ms; }
+  .pin:hover { background: rgba(255,255,255,0.45); color: var(--ink); }
+  .pin.active { background: rgba(255,255,255,0.85); color: var(--ink); font-weight: 500; }
+  .pin .ic { width: 14px; height: 14px; opacity: 0.75; flex-shrink: 0; }
+  .pin .badge { margin-left: auto; font-family: var(--mono); font-size: 10px; background: rgba(0,0,0,0.06); color: var(--ink-2); padding: 1px 7px; border-radius: 999px; font-weight: 500; }
+  .pin .badge.warn { background: rgba(255,141,107,0.25); color: var(--phys-ink); }
+
+  .spaces { display: flex; flex-direction: column; gap: 2px; padding: 0 2px; }
+  .space { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+  .space:hover { background: rgba(255,255,255,0.45); color: var(--ink); }
+  .space-pebble { width: 14px; height: 14px; border-radius: 5px; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
+  .pebble-phys { background: linear-gradient(135deg, var(--phys-a), var(--phys-b)); }
+  .pebble-phys2 { background: linear-gradient(135deg, #c46442, #e89070); }
+  .pebble-cs { background: linear-gradient(135deg, var(--cs-a), var(--cs-b)); }
+  .pebble-eng { background: linear-gradient(135deg, var(--eng-a), var(--eng-b)); }
+  .pebble-phil { background: linear-gradient(135deg, var(--phil-a), var(--phil-b)); }
+  .space .count { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px; margin-top: 4px; }
+  .tag { font-size: 11.5px; color: var(--ink-2); padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.5); cursor: pointer; }
+  .tag:hover { background: rgba(255,255,255,0.85); }
+  .tag::before { content: "#"; color: var(--ink-3); margin-right: 1px; }
+
+  .sidebar-foot { margin-top: auto; padding: 10px 10px 4px; border-top: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--ink-2); }
+  .avatar { width: 26px; height: 26px; background: linear-gradient(135deg, var(--phys-a), var(--phil-a)); color: white; border-radius: 50%; display: grid; place-items: center; font-family: var(--serif); font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .sidebar-foot .name { flex: 1; color: var(--ink); font-weight: 500; }
+  .sidebar-foot .gear { color: var(--ink-3); width: 14px; height: 14px; }
+
+  /* Canvas */
+  .canvas {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6), 0 12px 28px -16px rgba(60,45,25,0.18), 0 1px 2px rgba(60,45,25,0.04);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+  }
+  .main { padding: 32px 44px 56px; min-width: 0; }
+
+  /* Topbar */
+  .topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+  .crumb { font-size: 12.5px; color: var(--ink-3); display: flex; align-items: center; gap: 8px; }
+  .crumb b { color: var(--ink-2); font-weight: 500; }
+  .crumb .sep { color: var(--ink-faint); }
+  .topbar .right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .ibtn { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; color: var(--ink-3); transition: background 120ms, color 120ms; }
+  .ibtn:hover { background: var(--hover); color: var(--ink); }
+  .new-btn { display: flex; align-items: center; gap: 8px; padding: 7px 13px; background: var(--ink); color: var(--surface); border-radius: 9px; font-size: 12.5px; font-weight: 500; }
+  .new-btn:hover { background: #1a140e; }
+  .new-btn .kbd { font-family: var(--mono); font-size: 10px; background: rgba(255,255,255,0.18); padding: 1px 5px; border-radius: 3px; margin-left: 2px; }
+  .ai-btn { display: flex; align-items: center; gap: 7px; padding: 7px 13px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--rule); border-radius: 9px; font-size: 12.5px; font-weight: 500; }
+  .ai-btn:hover { background: var(--hover); color: var(--ink); }
+  .ai-btn .spark { width: 12px; height: 12px; color: var(--phil-ink); }
+
+  /* Page header */
+  .page-head { margin-bottom: 28px; }
+  .page-eyebrow { font-size: 12px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; margin-bottom: 10px; }
+  .page-title { font-family: var(--serif); font-size: 44px; font-weight: 500; letter-spacing: -0.025em; line-height: 1.05; margin: 0 0 6px; color: var(--ink); }
+  .page-title .em { font-style: italic; color: var(--ink-3); font-weight: 500; }
+  .page-sub { font-family: var(--serif); font-size: 17px; color: var(--ink-2); font-style: italic; line-height: 1.4; margin: 0; max-width: 540px; }
+
+  /* Filter bar */
+  .toolbar {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 22px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--rule-soft);
+  }
+  .seg {
+    display: inline-flex;
+    background: var(--bg-2);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .seg-btn {
+    padding: 5px 13px;
+    border-radius: 7px;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    font-weight: 500;
+    transition: all 120ms;
+  }
+  .seg-btn:hover { color: var(--ink); }
+  .seg-btn.active {
+    background: var(--surface-2);
+    color: var(--ink);
+    box-shadow: 0 1px 2px rgba(60,45,25,0.06);
+  }
+  .seg-btn .n {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--ink-3);
+    margin-left: 4px;
+    font-weight: 400;
+  }
+  .seg-btn.active .n { color: var(--ink-2); }
+  .seg-btn.danger.active { color: var(--phys-ink); }
+  .seg-btn.danger.active .n { color: var(--phys-ink); }
+
+  .toolbar .right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .sort-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px;
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--ink-2);
+    background: transparent;
+    white-space: nowrap;
+  }
+  .sort-btn:hover { background: var(--hover); }
+  .sort-btn .k { color: var(--ink-3); }
+
+  /* Sections */
+  .sect { margin-bottom: 30px; }
+  .sect-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; padding: 4px 0; }
+  .sect-head h2 { margin: 0; font-family: var(--serif); font-size: 22px; font-weight: 500; letter-spacing: -0.015em; color: var(--ink); }
+  .sect-head h2 .em { font-style: italic; color: var(--ink-3); font-weight: 400; }
+  .sect-head .count { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .sect-head .add { margin-left: auto; color: var(--ink-3); font-size: 12px; padding: 4px 9px; border-radius: 6px; }
+  .sect-head .add:hover { background: var(--hover); color: var(--ink); }
+  .sect.alert .sect-head h2 { color: var(--phys-ink); }
+
+  /* Row */
+  .row {
+    display: grid;
+    grid-template-columns: 22px 1fr auto auto auto;
+    gap: 14px;
+    align-items: center;
+    padding: 11px 8px;
+    border-radius: 10px;
+    margin: 0 -8px;
+    transition: background 120ms;
+    cursor: pointer;
+    position: relative;
+  }
+  .row:hover { background: var(--hover); }
+  .row.done { opacity: 0.55; }
+  .row.done .text { text-decoration: line-through; color: var(--ink-3); }
+
+  .check { width: 17px; height: 17px; border: 1.5px solid var(--ink-faint); border-radius: 6px; background: var(--surface-2); transition: all 120ms; display: grid; place-items: center; }
+  .check:hover { border-color: var(--ink-2); }
+  .check.overdue { border-color: var(--phys-ink); }
+  .check.checked { background: var(--ink); border-color: var(--ink); }
+  .check.checked svg { display: block; color: var(--surface); }
+  .check svg { display: none; width: 11px; height: 11px; }
+
+  .row-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .row-title .text { font-size: 14.5px; font-weight: 450; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.3; }
+  .row-title .text em { font-style: italic; color: var(--ink-2); font-weight: 400; }
+  .row-title .priority { color: var(--phys-ink); font-family: var(--serif); font-style: italic; font-weight: 500; margin-right: 1px; flex-shrink: 0; }
+
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 999px; flex-shrink: 0; }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .pill.physics { background: rgba(255,141,107,0.16); color: var(--phys-ink); }
+  .pill.physics .dot { background: linear-gradient(135deg, var(--phys-a), var(--phys-b)); }
+  .pill.physics2 { background: rgba(196,100,66,0.18); color: #6a2810; }
+  .pill.physics2 .dot { background: linear-gradient(135deg, #c46442, #e89070); }
+  .pill.cs { background: rgba(109,181,140,0.18); color: var(--cs-ink); }
+  .pill.cs .dot { background: linear-gradient(135deg, var(--cs-a), var(--cs-b)); }
+  .pill.eng { background: rgba(233,183,90,0.22); color: var(--eng-ink); }
+  .pill.eng .dot { background: linear-gradient(135deg, var(--eng-a), var(--eng-b)); }
+  .pill.phil { background: rgba(169,142,212,0.20); color: var(--phil-ink); }
+  .pill.phil .dot { background: linear-gradient(135deg, var(--phil-a), var(--phil-b)); }
+
+  .est {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--ink-3);
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: rgba(60,45,25,0.04);
+    flex-shrink: 0;
+  }
+  .est svg { width: 10px; height: 10px; opacity: 0.7; }
+
+  .due { font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); font-variant-numeric: tabular-nums; text-align: right; min-width: 60px; }
+  .due.overdue { color: var(--phys-ink); font-weight: 500; }
+  .due.soon { color: var(--eng-ink); }
+
+  .row-action { color: var(--ink-3); width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; opacity: 0; transition: opacity 120ms; }
+  .row:hover .row-action { opacity: 1; }
+  .row-action:hover { background: rgba(0,0,0,0.06); color: var(--ink); }
+
+  /* Quick add inline */
+  .quick-add {
+    margin: 4px -8px 0;
+    padding: 10px 12px 10px 14px;
+    border-radius: 10px;
+    border: 1px dashed var(--ink-faint);
+    background: rgba(255,255,255,0.4);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: text;
+    color: var(--ink-3);
+    font-size: 13px;
+  }
+  .quick-add:hover { border-color: var(--ink-3); background: rgba(255,255,255,0.7); }
+  .quick-add .plus { width: 17px; height: 17px; border: 1.5px dashed var(--ink-faint); border-radius: 6px; display: grid; place-items: center; font-size: 11px; color: var(--ink-3); }
+  .quick-add .hint { margin-left: auto; font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); }
+
+  /* Right rail */
+  .rail {
+    border-left: 1px solid var(--rule-soft);
+    background: linear-gradient(180deg, var(--surface) 0%, #f7f1e2 100%);
+    padding: 32px 28px 40px;
+    display: flex; flex-direction: column; gap: 28px;
+    overflow-y: auto;
+  }
+  .rail-section .label { font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; margin-bottom: 12px; display: flex; align-items: baseline; justify-content: space-between; }
+  .rail-section .label .more { text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 11.5px; color: var(--ink-3); cursor: pointer; }
+  .rail-section .label .more:hover { color: var(--ink); }
+
+  /* Progress card */
+  .progress-card {
+    background: var(--surface-2);
+    border: 1px solid var(--rule-soft);
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 2px rgba(60,45,25,0.04);
+  }
+  .progress-card .h {
+    font-family: var(--serif); font-size: 26px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1.05;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .progress-card .h .of { color: var(--ink-3); font-size: 16px; font-style: italic; font-weight: 400; }
+  .progress-card .s { font-size: 12px; color: var(--ink-3); font-family: var(--mono); margin-bottom: 14px; }
+  .progress-bar {
+    height: 6px;
+    background: var(--rule);
+    border-radius: 999px;
+    overflow: hidden;
+  }
+  .progress-bar .fill {
+    height: 100%;
+    width: 50%;
+    background: linear-gradient(90deg, var(--cs-a), var(--phil-a));
+    border-radius: 999px;
+  }
+  .progress-card .legend {
+    display: flex; gap: 14px; margin-top: 14px;
+    font-size: 11px; color: var(--ink-3);
+    font-family: var(--mono);
+  }
+  .progress-card .legend span b {
+    color: var(--ink); font-weight: 500;
+    margin-right: 3px;
+    font-family: var(--serif);
+    font-size: 13px;
+  }
+
+  /* Course breakdown */
+  .courses { display: flex; flex-direction: column; gap: 6px; }
+  .course-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 4px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .course-row:hover { background: rgba(60,45,25,0.04); }
+  .course-pebble { width: 12px; height: 12px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
+  .course-row .name { font-size: 12.5px; color: var(--ink-2); font-weight: 500; }
+  .course-row .frac { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); }
+  .course-row .mini-bar {
+    grid-column: 2 / 3;
+    height: 3px;
+    background: var(--rule);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: -2px;
+  }
+  .course-row .mini-bar .fill { height: 100%; border-radius: 999px; }
+
+  /* AI nudge */
+  .nudge {
+    background: linear-gradient(135deg, rgba(169,142,212,0.18), rgba(109,181,140,0.10));
+    border: 1px solid rgba(169,142,212,0.25);
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .nudge .l1 {
+    font-size: 10.5px; font-weight: 600;
+    color: var(--phil-ink);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .nudge .l1 svg { width: 11px; height: 11px; }
+  .nudge .body {
+    font-family: var(--serif); font-size: 14.5px;
+    font-style: italic; line-height: 1.4;
+    color: var(--ink); margin: 0 0 10px;
+  }
+  .nudge .body b { font-style: normal; font-weight: 600; color: var(--phil-ink); }
+  .nudge .actions { display: flex; gap: 6px; }
+  .nudge .nbtn { padding: 4px 11px; border-radius: 7px; font-size: 11.5px; font-weight: 500; background: rgba(255,255,255,0.7); color: var(--phil-ink); }
+  .nudge .nbtn:hover { background: rgba(255,255,255,1); }
+  .nudge .nbtn.solid { background: var(--phil-ink); color: white; }
+  .nudge .nbtn.solid:hover { background: #2d1f47; }
+
+  .hint-foot {
+    margin-top: auto;
+    padding-top: 16px;
+    font-size: 11px;
+    color: var(--ink-3);
+    text-align: center;
+    line-height: 1.6;
+  }
+  .hint-foot .k { font-family: var(--mono); font-size: 10px; padding: 1px 5px; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 3px; color: var(--ink-2); }
+
+  @media (max-width: 1100px) {
+    .canvas { grid-template-columns: 1fr; }
+    .rail { border-left: none; border-top: 1px solid var(--rule-soft); }
+  }
+  @media (max-width: 760px) {
+    .shell { grid-template-columns: 1fr; padding: 6px; }
+    .sidebar { display: none; }
+    .main { padding: 24px 22px 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="ws">
+      <div class="ws-icon">S</div>
+      <div class="ws-name">Saal's space</div>
+      <span class="ws-chev">⌄</span>
+    </div>
+
+    <div class="cmd">
+      <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="7" cy="7" r="4.5"></circle><path d="M11 11l3.5 3.5"></path>
+      </svg>
+      <span class="placeholder">Search or run command</span>
+      <span class="kbd">⌘K</span>
+    </div>
+
+    <div class="pinned">
+      <a class="pin">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2.5 8 L8 2.5 L13.5 8 L13.5 13.5 L9.5 13.5 L9.5 9.5 L6.5 9.5 L6.5 13.5 L2.5 13.5 Z"></path>
+        </svg>
+        Today
+      </a>
+      <a class="pin active">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 4h10M3 8h10M3 12h7"></path>
+        </svg>
+        Tasks
+        <span class="badge">9</span>
+      </a>
+      <a class="pin">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2.5" y="3.5" width="11" height="9.5" rx="1.5"></rect><path d="M5.5 6.5h5M5.5 9h3"></path>
+        </svg>
+        Exams
+        <span class="badge warn">12d</span>
+      </a>
+      <a class="pin">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2 12 L6 8 L9 11 L14 5"></path>
+        </svg>
+        Tracker
+      </a>
+      <a class="pin">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path>
+        </svg>
+        Focus
+      </a>
+    </div>
+
+    <div class="nav-label">Spaces</div>
+    <div class="spaces">
+      <div class="space"><span class="space-pebble pebble-phys"></span>PHYS 211<span class="count">3</span></div>
+      <div class="space"><span class="space-pebble pebble-phys2"></span>PHYS 311<span class="count">1</span></div>
+      <div class="space"><span class="space-pebble pebble-cs"></span>CS 232<span class="count">2</span></div>
+      <div class="space"><span class="space-pebble pebble-eng"></span>ENG 102<span class="count">2</span></div>
+      <div class="space"><span class="space-pebble pebble-phil"></span>PHIL 240<span class="count">1</span></div>
+    </div>
+
+    <div class="nav-label">Tags</div>
+    <div class="tags">
+      <span class="tag">midterm</span>
+      <span class="tag">writeup</span>
+      <span class="tag">reading</span>
+      <span class="tag">lab</span>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="avatar">S</div>
+      <div class="name">Saal Maharaj</div>
+      <svg class="gear" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="8" r="2.5"></circle>
+        <path d="M8 1.5v2M8 12.5v2M14.5 8h-2M3.5 8h-2M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4M12.6 12.6l-1.4-1.4M4.8 4.8L3.4 3.4"></path>
+      </svg>
+    </div>
+  </aside>
+
+  <!-- Canvas -->
+  <main class="canvas">
+
+    <div class="main">
+
+      <div class="topbar">
+        <div class="crumb"><b>Tasks</b><span class="sep">·</span>9 active · 2 overdue</div>
+        <div class="right">
+          <button class="ai-btn">
+            <svg class="spark" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M8 2v4M8 10v4M2 8h4M10 8h4M4 4l2 2M10 10l2 2M12 4l-2 2M6 10l-2 2"></path>
+            </svg>
+            Add with AI
+          </button>
+          <button class="new-btn">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"></path></svg>
+            New task
+            <span class="kbd">N</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="page-head">
+        <div class="page-eyebrow">Tuesday · Week 12</div>
+        <h1 class="page-title">Tasks <span class="em">— what's next.</span></h1>
+        <p class="page-sub">Two writeups overdue. Three things due tonight, six before Friday.</p>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="seg">
+          <button class="seg-btn active">All<span class="n">9</span></button>
+          <button class="seg-btn">Active<span class="n">7</span></button>
+          <button class="seg-btn">Completed<span class="n">14</span></button>
+          <button class="seg-btn danger">Overdue<span class="n">2</span></button>
+        </div>
+        <div class="right">
+          <button class="sort-btn">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h10M5 8h6M7 12h2"></path></svg>
+            Group by <span class="k">due date</span>
+          </button>
+          <button class="sort-btn">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 3v10M2 5l2-2 2 2M12 13V3M10 11l2 2 2-2"></path></svg>
+            Sort
+          </button>
+        </div>
+      </div>
+
+      <!-- Overdue -->
+      <section class="sect alert">
+        <div class="sect-head">
+          <h2>Overdue <span class="em">— attend first</span></h2>
+          <span class="count">2</span>
+        </div>
+        <div class="row">
+          <div class="check overdue">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"></path></svg>
+          </div>
+          <div class="row-title">
+            <span class="priority">!</span>
+            <span class="text">Lab 2 writeup — <em>Pendulum oscillation</em></span>
+            <span class="pill physics"><span class="dot"></span>PHYS 211</span>
+          </div>
+          <span class="est">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>
+            45m
+          </span>
+          <div class="due overdue">3d late</div>
+          <div class="row-action">⋯</div>
+        </div>
+        <div class="row">
+          <div class="check overdue">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"></path></svg>
+          </div>
+          <div class="row-title">
+            <span class="text">Reading response — <em>Foucault Ch. 1</em></span>
+            <span class="pill phil"><span class="dot"></span>PHIL 240</span>
+          </div>
+          <span class="est">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>
+            30m
+          </span>
+          <div class="due overdue">1d late</div>
+          <div class="row-action">⋯</div>
+        </div>
+      </section>
+
+      <!-- Today -->
+      <section class="sect">
+        <div class="sect-head">
+          <h2>Today</h2>
+          <span class="count">3</span>
+          <span class="add">+ Add task</span>
+        </div>
+        <div class="row">
+          <div class="check">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"></path></svg>
+          </div>
+          <div class="row-title">
+            <span class="text">Read Ch. 4 — <em>Equilibrium</em></span>
+            <span class="pill physics"><span class="dot"></span>PHYS 211</span>
+          </div>
+          <span class="est">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>
+            1h
+          </span>
+          <div class="due">9 PM</div>
+          <div class="row-action">⋯</div>
+        </div>
+        <div class="row">
+          <div class="check">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"></path></svg>
+          </div>
+          <div class="row-title">
+            <span class="priority">!</span>
+            <span class="text">Problem set 3</span>
+            <span class="pill cs"><span class="dot"></span>CS 232</span>
+          </div>
+          <span class="est">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>
+            2h
+          </span>
+          <div class="due soon">11 PM</div>
+          <div class="row-action">⋯</div>
+        </div>
+        <div class="row">
+          <div class="check">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"></path></svg>
+          </div>
+          <div class="row-title">
+            <span class="text">Draft intro paragraph</span>
+            <span class="pill eng"><span class="dot"></span>ENG 102</span>
+          </div>
+          <span class="est">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>
+            30m
+          </span>
+          <div class="due">EOD</div>
+          <div class="row-action">⋯</div>
+        </div>
+        <div class="quick-add">
+          <span class="plus">+</span>
+          <span>Add a task for today…</span>
+          <span class="hint">↵</span>
+        </div>
+      </section>
+
+      <!-- This week -->
+      <section class="sect">
+        <div class="sect-head">
+          <h2>This week <span class="em">— ahead</span></h2>
+          <span class="count">4</span>
+          <span class="add">+ Add task</span>
+        </div>
+        <div class="row">
+          <div class="check">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"></path></svg>
+          </div>
+          <div class="row-title">
+            <span class="text">Group meeting prep</span>
+            <span class="pill cs"><span class="dot"></span>CS 232</span>
+          </div>
+          <span class="est">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>
+            45m
+          </span>
+          <div class="due">Wed</div>
+          <div class="row-action">⋯</div>
+        </div>
+        <div class="row">
+          <div class="check">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"></path></svg>
+          </div>
+          <div class="row-title">
+            <span class="text">Lab 3 — <em>Spring constant</em></span>
+            <span class="pill physics"><span class="dot"></span>PHYS 211</span>
+          </div>
+          <span class="est">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>
+            2h
+          </span>
+          <div class="due">Thu</div>
+          <div class="row-action">⋯</div>
+        </div>
+        <div class="row">
+          <div class="check">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"></path></svg>
+          </div>
+          <div class="row-title">
+            <span class="priority">!</span>
+            <span class="text">Quantum midterm review — <em>Ch. 1–4</em></span>
+            <span class="pill physics2"><span class="dot"></span>PHYS 311</span>
+          </div>
+          <span class="est">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>
+            3h
+          </span>
+          <div class="due">Fri</div>
+          <div class="row-action">⋯</div>
+        </div>
+        <div class="row">
+          <div class="check">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"></path></svg>
+          </div>
+          <div class="row-title">
+            <span class="text">Outline for term paper</span>
+            <span class="pill eng"><span class="dot"></span>ENG 102</span>
+          </div>
+          <span class="est">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>
+            1h
+          </span>
+          <div class="due">Mon</div>
+          <div class="row-action">⋯</div>
+        </div>
+      </section>
+
+      <!-- Completed today -->
+      <section class="sect">
+        <div class="sect-head">
+          <h2>Completed today <span class="em">— well done</span></h2>
+          <span class="count">2</span>
+        </div>
+        <div class="row done">
+          <div class="check checked">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"></path></svg>
+          </div>
+          <div class="row-title">
+            <span class="text">Discussion post — Plato's cave</span>
+            <span class="pill phil"><span class="dot"></span>PHIL 240</span>
+          </div>
+          <span class="est"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>20m</span>
+          <div class="due">2:14 PM</div>
+          <div class="row-action">⋯</div>
+        </div>
+        <div class="row done">
+          <div class="check checked">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"></path></svg>
+          </div>
+          <div class="row-title">
+            <span class="text">Skim lecture slides — week 11</span>
+            <span class="pill cs"><span class="dot"></span>CS 232</span>
+          </div>
+          <span class="est"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>15m</span>
+          <div class="due">11:08 AM</div>
+          <div class="row-action">⋯</div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Right rail -->
+    <aside class="rail">
+
+      <div class="rail-section">
+        <div class="label">This week</div>
+        <div class="progress-card">
+          <div class="h">7<span class="of"> of 14 done</span></div>
+          <div class="s">~9h estimated remaining</div>
+          <div class="progress-bar"><div class="fill"></div></div>
+          <div class="legend">
+            <span><b>2</b>overdue</span>
+            <span><b>5</b>active</span>
+            <span><b>7</b>done</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="rail-section">
+        <div class="label">By course</div>
+        <div class="courses">
+          <div class="course-row">
+            <span class="course-pebble pebble-phys"></span>
+            <span class="name">PHYS 211</span>
+            <span class="frac">3 / 5</span>
+            <div class="mini-bar"><div class="fill" style="width: 60%; background: linear-gradient(90deg, var(--phys-a), var(--phys-b));"></div></div>
+          </div>
+          <div class="course-row">
+            <span class="course-pebble pebble-phys2"></span>
+            <span class="name">PHYS 311</span>
+            <span class="frac">1 / 2</span>
+            <div class="mini-bar"><div class="fill" style="width: 50%; background: linear-gradient(90deg, #c46442, #e89070);"></div></div>
+          </div>
+          <div class="course-row">
+            <span class="course-pebble pebble-cs"></span>
+            <span class="name">CS 232</span>
+            <span class="frac">2 / 4</span>
+            <div class="mini-bar"><div class="fill" style="width: 50%; background: linear-gradient(90deg, var(--cs-a), var(--cs-b));"></div></div>
+          </div>
+          <div class="course-row">
+            <span class="course-pebble pebble-eng"></span>
+            <span class="name">ENG 102</span>
+            <span class="frac">0 / 2</span>
+            <div class="mini-bar"><div class="fill" style="width: 0%; background: linear-gradient(90deg, var(--eng-a), var(--eng-b));"></div></div>
+          </div>
+          <div class="course-row">
+            <span class="course-pebble pebble-phil"></span>
+            <span class="name">PHIL 240</span>
+            <span class="frac">1 / 1</span>
+            <div class="mini-bar"><div class="fill" style="width: 100%; background: linear-gradient(90deg, var(--phil-a), var(--phil-b));"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rail-section">
+        <div class="label">Suggested</div>
+        <div class="nudge">
+          <div class="l1">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg>
+            AI suggestion
+          </div>
+          <p class="body">Tackle <b>Lab 2 writeup</b> first — it's overdue and will only take ~45 min. Then ride momentum into Problem set 3.</p>
+          <div class="actions">
+            <button class="nbtn solid">Start now</button>
+            <button class="nbtn">Reschedule</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint-foot">
+        <span class="k">↵</span> add task · <span class="k">⌘↵</span> complete · <span class="k">/</span> filter
+      </div>
+
+    </aside>
+
+  </main>
+
+</div>
+
+<script>
+  document.querySelectorAll('.row').forEach(row => {
+    const check = row.querySelector('.check');
+    if (!check) return;
+    check.addEventListener('click', e => {
+      e.stopPropagation();
+      check.classList.toggle('checked');
+      row.classList.toggle('done');
+    });
+  });
+
+  document.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

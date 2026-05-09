@@ -1,9 +1,192 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/base :: layout(content=~{::content})}">
-<body>
-<th:block th:fragment="content">
-    <h1>Focus</h1>
-</th:block>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body th:class="'page-focus acc-' + (${focusView.pillClass()} != '' ? ${focusView.pillClass()} : 'cs')">
+
+<!-- Setup variant -->
+<div class="page" th:if="${focusView.getClass().simpleName == 'SetupView'}">
+
+    <div class="top">
+        <a class="back" th:href="@{/}">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9.5 3.5 L5 8 L9.5 12.5"></path></svg>
+            Dashboard
+        </a>
+        <div class="center">Focus Mode</div>
+        <div class="right">
+            <button class="ibtn" type="button" disabled title="Coming soon">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <circle cx="8" cy="8" r="2.4"></circle>
+                    <path d="M8 1.5v2M8 12.5v2M14.5 8h-2M3.5 8h-2M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4M12.6 12.6l-1.4-1.4M4.8 4.8L3.4 3.4"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="stage">
+        <form id="setupForm" class="setup-card" th:action="@{/focus/start}" method="post">
+            <h2>What are you working on?</h2>
+
+            <div>
+                <label for="taskSelect">Task (optional)</label>
+                <select id="taskSelect" name="taskId">
+                    <option value="">No specific task</option>
+                    <option th:each="t : ${focusView.selectableTasks()}"
+                            th:value="${t.id}"
+                            th:selected="${t.id} == ${focusView.defaultTaskId()}"
+                            th:attr="data-title=${t.title},data-course-id=${t.course.id}"
+                            th:text="${t.title} + (${t.italicSuffix} != null ? ' — ' + ${t.italicSuffix} : '') + '  ·  ' + ${t.course.code}"></option>
+                </select>
+            </div>
+
+            <div>
+                <label for="courseSelect">Course</label>
+                <select id="courseSelect" name="courseId" required>
+                    <option th:each="c : ${focusView.courses()}"
+                            th:value="${c.id}"
+                            th:selected="${c.id} == ${focusView.defaultCourseId()}"
+                            th:text="${c.code} + ' — ' + ${c.name}"></option>
+                </select>
+            </div>
+
+            <div>
+                <label for="titleInput">Session title</label>
+                <input id="titleInput" name="title" type="text" required th:value="${focusView.defaultTitle()}"/>
+            </div>
+
+            <input type="hidden" name="italicSuffix" th:value="${focusView.defaultItalicSuffix()}"/>
+            <button class="start-btn" type="submit">Start 25-minute pomodoro</button>
+        </form>
+    </div>
+
+    <div class="bottom">
+        <div></div>
+        <div class="hint"><span class="kbd">Esc</span> back · <span class="kbd">↵</span> start</div>
+    </div>
+</div>
+
+<!-- Running variant -->
+<div class="page"
+     th:if="${focusView.getClass().simpleName == 'RunningView'}"
+     id="focusRoot"
+     data-mode="running"
+     th:attr="data-session-id=${focusView.sessionId()},data-started-at=${focusView.startedAtEpochMs()},data-server-now=${focusView.serverNowEpochMs()},data-planned=${focusView.plannedDurationSeconds()},data-session-type=${focusView.sessionType()}">
+
+    <div class="top">
+        <form th:action="@{/focus/end}" method="post" style="display:contents;">
+            <button class="back" type="submit">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9.5 3.5 L5 8 L9.5 12.5"></path></svg>
+                Dashboard
+            </button>
+        </form>
+        <div class="center" th:text="${focusView.sessionType() == 'BREAK' ? 'BREAK' : 'FOCUS MODE'}">FOCUS MODE</div>
+        <div class="right">
+            <button class="amb" type="button" disabled title="Coming soon">
+                <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <path d="M2.5 6 L5 6 L8.5 3 L8.5 13 L5 10 L2.5 10 Z"></path>
+                    <path d="M11 5.5 Q12.5 8 11 10.5"></path>
+                    <path d="M13 4 Q15 8 13 12"></path>
+                </svg>
+                Ambient
+                <span class="soon">soon</span>
+            </button>
+            <button class="ibtn" type="button" disabled title="Settings">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                    <circle cx="8" cy="8" r="2.4"></circle>
+                    <path d="M8 1.5v2M8 12.5v2M14.5 8h-2M3.5 8h-2M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4M12.6 12.6l-1.4-1.4M4.8 4.8L3.4 3.4"></path>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="stage">
+        <div class="stage-inner">
+
+            <div class="task-card" th:if="${focusView.sessionType() != 'BREAK'}">
+                <span class="pill">
+                    <span class="dot"></span><span th:text="${focusView.courseCode()}">CS 232</span>
+                </span>
+                <span class="task-text">
+                    <span th:text="${focusView.title()}">Problem set 3</span><th:block th:if="${focusView.italicSuffix() != null}"> — <em th:text="${focusView.italicSuffix()}">recursion</em></th:block>
+                </span>
+            </div>
+
+            <div class="batt-wrap" id="battWrap" title="Click for full screen">
+                <div class="batt-tip" id="battTip"></div>
+                <div class="batt-body" id="battBody"></div>
+            </div>
+
+            <div class="eyebrow">
+                <span class="live-dot"></span>
+                <span th:text="${focusView.sessionType() == 'BREAK' ? 'On break' : 'In session'}">In session</span>
+            </div>
+            <div class="time">25<span class="colon">:</span>00</div>
+            <div class="phase-label"
+                 th:text="${focusView.sessionType() == 'BREAK' ? 'rest · between pomodoros' : 'deep work · pomodoro ' + (focusView.pomodorosCompleted() + 1) + ' of ' + focusView.cycleLength()}">deep work · pomodoro 1 of 4</div>
+
+            <div class="cycle" th:if="${focusView.sessionType() != 'BREAK'}">
+                <span>Cycle</span>
+                <div class="dots">
+                    <div th:each="i : ${#numbers.sequence(1, focusView.cycleLength())}"
+                         th:class="'seg' + (${i} <= ${focusView.pomodorosCompleted()} ? ' done' : (${i} == ${focusView.pomodorosCompleted() + 1} ? ' active' : ''))"></div>
+                </div>
+                <span th:text="${focusView.pomodorosCompleted()} + ' / ' + ${focusView.cycleLength()}">0 / 4</span>
+            </div>
+
+            <div class="controls">
+                <form id="skipForm" th:action="@{/focus/skip}" method="post" style="display:contents;" th:if="${focusView.sessionType() != 'BREAK'}">
+                    <input type="hidden" name="sessionId" th:value="${focusView.sessionId()}"/>
+                    <button class="btn btn-secondary" type="submit">
+                        <svg class="ic" viewBox="0 0 16 16" fill="currentColor"><path d="M3.5 3 L9 8 L3.5 13 Z"></path><rect x="10.5" y="3" width="2" height="10" rx="0.5"></rect></svg>
+                        Skip
+                    </button>
+                </form>
+                <button id="pauseBtn" class="btn btn-primary" type="button">
+                    <svg class="ic" viewBox="0 0 16 16" fill="currentColor"><rect x="4" y="3.5" width="2.5" height="9" rx="0.5"></rect><rect x="9.5" y="3.5" width="2.5" height="9" rx="0.5"></rect></svg>
+                    <span class="btn-label">Pause</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="bottom">
+        <div class="up-next" th:if="${focusView.upNextTitle() != null}">
+            <span class="label">Up next</span>
+            <em>
+                <span th:text="${focusView.upNextTitle()}"></span><th:block th:if="${focusView.upNextItalic() != null}"> — <span th:text="${focusView.upNextItalic()}"></span></th:block>
+            </em>
+            <span th:class="'pill ' + ${focusView.upNextPillClass()}">
+                <span class="dot"></span><span th:text="${focusView.upNextCourseCode()}"></span>
+            </span>
+        </div>
+        <div th:unless="${focusView.upNextTitle() != null}"></div>
+        <div class="hint">
+            <span class="kbd">Space</span> pause/resume · <span class="kbd">S</span> skip · <span class="kbd">Esc</span> exit fullscreen
+        </div>
+    </div>
+
+    <!-- Pomodoro-done overlay -->
+    <div class="done-overlay" id="doneOverlay">
+        <div class="done-card">
+            <h2 th:text="${focusView.sessionType() == 'BREAK' ? 'Break over' : 'Pomodoro done'}">Pomodoro done</h2>
+            <p th:text="${focusView.sessionType() == 'BREAK' ? 'Ready to focus again?' : 'Nice work. Take a 5-minute break?'}">Nice work. Take a 5-minute break?</p>
+            <div class="done-actions">
+                <form th:action="@{/focus/break/start}" method="post" style="display:inline;" th:if="${focusView.sessionType() != 'BREAK'}">
+                    <button class="primary" type="submit">Start 5-min break</button>
+                </form>
+                <form th:action="@{/focus/end}" method="post" style="display:inline;" th:if="${focusView.sessionType() == 'BREAK'}">
+                    <input type="hidden" name="next" value="/focus"/>
+                    <button class="primary" type="submit">Back to work</button>
+                </form>
+                <form th:action="@{/focus/end}" method="post" style="display:inline;">
+                    <button class="ghost" type="submit">End session</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/focus.js}" defer></script>
+
 </body>
 </html>

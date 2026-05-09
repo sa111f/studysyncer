@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>StudySyncer — Exams</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:           #f5f0e6;
+    --bg-2:         #ede6d5;
+    --surface:      #fbf7ec;
+    --surface-2:    #ffffff;
+    --hover:        #efe9da;
+
+    --ink:          #2a221a;
+    --ink-2:        #4a3f30;
+    --ink-3:        #8a7c66;
+    --ink-faint:    #c4b89e;
+    --rule:         rgba(60, 45, 25, 0.12);
+    --rule-soft:    rgba(60, 45, 25, 0.06);
+
+    --phys-a:       #ff8d6b;
+    --phys-b:       #ffb8a0;
+    --phys-ink:     #7a2e15;
+
+    --cs-a:         #6db58c;
+    --cs-b:         #a9d9ba;
+    --cs-ink:       #1f4a30;
+
+    --eng-a:        #e9b75a;
+    --eng-b:        #f4d28e;
+    --eng-ink:      #6a4810;
+
+    --phil-a:       #a98ed4;
+    --phil-b:       #cfbce8;
+    --phil-ink:     #422968;
+
+    --space-a:      var(--cs-a);
+    --space-b:      var(--cs-b);
+    --space-ink:    var(--cs-ink);
+
+    --serif: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+    --sans:  'Inter', -apple-system, system-ui, sans-serif;
+    --mono:  'JetBrains Mono', ui-monospace, monospace;
+
+    --t: 220ms cubic-bezier(0.32, 0.72, 0.24, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; padding: 0; }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 248px 1fr;
+    min-height: 100vh;
+    padding: 10px;
+    gap: 10px;
+    background:
+      radial-gradient(1100px 600px at 0% 0%, rgba(255,141,107,0.18), transparent 60%),
+      radial-gradient(900px 500px at 100% 100%, rgba(169,142,212,0.15), transparent 65%),
+      var(--bg);
+  }
+
+  /* Sidebar */
+  .sidebar {
+    background: linear-gradient(170deg, var(--space-a) 0%, var(--space-b) 60%, transparent 110%), var(--bg-2);
+    border-radius: 16px;
+    padding: 16px 12px;
+    display: flex; flex-direction: column; gap: 4px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4), 0 1px 2px rgba(60,45,25,0.04);
+    color: var(--space-ink);
+  }
+  .ws { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; margin-bottom: 8px; cursor: pointer; }
+  .ws:hover { background: rgba(255,255,255,0.4); }
+  .ws-icon { width: 26px; height: 26px; border-radius: 8px; background: rgba(255,255,255,0.65); color: var(--space-ink); display: grid; place-items: center; font-family: var(--serif); font-weight: 600; font-size: 14px; }
+  .ws-name { flex: 1; font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em; color: var(--ink); }
+  .ws-chev { color: var(--ink-3); font-size: 11px; opacity: 0.7; }
+
+  .cmd { display: flex; align-items: center; gap: 8px; padding: 7px 11px; border-radius: 10px; background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.7); color: var(--ink-2); font-size: 12.5px; margin-bottom: 14px; cursor: text; }
+  .cmd:hover { background: rgba(255,255,255,0.8); }
+  .cmd .ic { width: 13px; height: 13px; opacity: 0.7; flex-shrink: 0; }
+  .cmd .placeholder { flex: 1; color: var(--ink-3); }
+  .cmd .kbd { font-family: var(--mono); font-size: 10px; padding: 1px 6px; background: rgba(255,255,255,0.7); border-radius: 4px; color: var(--ink-2); border: 1px solid var(--rule-soft); }
+
+  .nav-label { font-size: 10.5px; color: var(--ink-3); padding: 12px 12px 4px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .pinned { display: flex; flex-direction: column; gap: 1px; }
+  .pin { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; font-size: 13px; color: var(--ink-2); cursor: pointer; transition: background 120ms; }
+  .pin:hover { background: rgba(255,255,255,0.45); color: var(--ink); }
+  .pin.active { background: rgba(255,255,255,0.85); color: var(--ink); font-weight: 500; }
+  .pin .ic { width: 14px; height: 14px; opacity: 0.75; flex-shrink: 0; }
+  .pin .badge { margin-left: auto; font-family: var(--mono); font-size: 10px; background: rgba(0,0,0,0.06); color: var(--ink-2); padding: 1px 7px; border-radius: 999px; font-weight: 500; }
+  .pin .badge.warn { background: rgba(255,141,107,0.25); color: var(--phys-ink); }
+
+  .spaces { display: flex; flex-direction: column; gap: 2px; padding: 0 2px; }
+  .space { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 8px; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+  .space:hover { background: rgba(255,255,255,0.45); color: var(--ink); }
+  .space-pebble { width: 14px; height: 14px; border-radius: 5px; flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); }
+  .pebble-phys { background: linear-gradient(135deg, var(--phys-a), var(--phys-b)); }
+  .pebble-phys2 { background: linear-gradient(135deg, #c46442, #e89070); }
+  .pebble-cs { background: linear-gradient(135deg, var(--cs-a), var(--cs-b)); }
+  .pebble-eng { background: linear-gradient(135deg, var(--eng-a), var(--eng-b)); }
+  .pebble-phil { background: linear-gradient(135deg, var(--phil-a), var(--phil-b)); }
+  .space .count { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--ink-3); }
+
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px; margin-top: 4px; }
+  .tag { font-size: 11.5px; color: var(--ink-2); padding: 3px 8px; border-radius: 999px; background: rgba(255,255,255,0.5); cursor: pointer; }
+  .tag:hover { background: rgba(255,255,255,0.85); }
+  .tag::before { content: "#"; color: var(--ink-3); margin-right: 1px; }
+
+  .sidebar-foot { margin-top: auto; padding: 10px 10px 4px; border-top: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: var(--ink-2); }
+  .avatar { width: 26px; height: 26px; background: linear-gradient(135deg, var(--phys-a), var(--phil-a)); color: white; border-radius: 50%; display: grid; place-items: center; font-family: var(--serif); font-size: 13px; font-weight: 600; flex-shrink: 0; }
+  .sidebar-foot .name { flex: 1; color: var(--ink); font-weight: 500; }
+  .sidebar-foot .gear { color: var(--ink-3); width: 14px; height: 14px; }
+
+  /* Canvas */
+  .canvas {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6), 0 12px 28px -16px rgba(60,45,25,0.18), 0 1px 2px rgba(60,45,25,0.04);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+  }
+  .main { padding: 32px 44px 56px; min-width: 0; }
+
+  /* Topbar */
+  .topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+  .crumb { font-size: 12.5px; color: var(--ink-3); display: flex; align-items: center; gap: 8px; }
+  .crumb b { color: var(--ink-2); font-weight: 500; }
+  .crumb .sep { color: var(--ink-faint); }
+  .topbar .right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .ibtn { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 8px; color: var(--ink-3); transition: background 120ms, color 120ms; }
+  .ibtn:hover { background: var(--hover); color: var(--ink); }
+  .new-btn { display: flex; align-items: center; gap: 8px; padding: 7px 13px; background: var(--ink); color: var(--surface); border-radius: 9px; font-size: 12.5px; font-weight: 500; }
+  .new-btn:hover { background: #1a140e; }
+  .new-btn .kbd { font-family: var(--mono); font-size: 10px; background: rgba(255,255,255,0.18); padding: 1px 5px; border-radius: 3px; margin-left: 2px; }
+  .ai-btn { display: flex; align-items: center; gap: 7px; padding: 7px 13px; background: var(--surface-2); color: var(--ink-2); border: 1px solid var(--rule); border-radius: 9px; font-size: 12.5px; font-weight: 500; }
+  .ai-btn:hover { background: var(--hover); color: var(--ink); }
+  .ai-btn .spark { width: 12px; height: 12px; color: var(--phil-ink); }
+
+  /* Page header */
+  .page-head { margin-bottom: 28px; }
+  .page-eyebrow { font-size: 12px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; margin-bottom: 10px; }
+  .page-title { font-family: var(--serif); font-size: 44px; font-weight: 500; letter-spacing: -0.025em; line-height: 1.05; margin: 0 0 6px; color: var(--ink); }
+  .page-title .em { font-style: italic; color: var(--ink-3); font-weight: 500; }
+  .page-sub { font-family: var(--serif); font-size: 17px; color: var(--ink-2); font-style: italic; line-height: 1.4; margin: 0; max-width: 540px; }
+
+  /* Toolbar */
+  .toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 24px; padding-bottom: 14px; border-bottom: 1px solid var(--rule-soft); }
+  .seg { display: inline-flex; background: var(--bg-2); border-radius: 10px; padding: 3px; gap: 2px; }
+  .seg-btn { padding: 5px 13px; border-radius: 7px; font-size: 12.5px; color: var(--ink-3); font-weight: 500; transition: all 120ms; }
+  .seg-btn:hover { color: var(--ink); }
+  .seg-btn.active { background: var(--surface-2); color: var(--ink); box-shadow: 0 1px 2px rgba(60,45,25,0.06); }
+  .seg-btn .n { font-family: var(--mono); font-size: 10px; color: var(--ink-3); margin-left: 4px; font-weight: 400; }
+  .seg-btn.active .n { color: var(--ink-2); }
+  .toolbar .right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .view-btn {
+    padding: 5px 11px; border-radius: 8px;
+    font-size: 12px; color: var(--ink-3); display: inline-flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+  .view-btn:hover { background: var(--hover); color: var(--ink); }
+  .view-btn.active { color: var(--ink); background: var(--hover); }
+
+  /* Hero — soonest exam */
+  .hero {
+    margin-bottom: 36px;
+    border-radius: 16px;
+    padding: 28px 32px;
+    background:
+      radial-gradient(circle at 85% 25%, rgba(255,141,107,0.40), transparent 55%),
+      linear-gradient(135deg, rgba(255,141,107,0.22), rgba(169,142,212,0.10));
+    border: 1px solid rgba(255,141,107,0.28);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 26px;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent 0 23px, rgba(122,46,21,0.04) 23px 24px);
+    pointer-events: none;
+  }
+  .hero-cd {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 6px 22px 6px 0;
+    border-right: 1px solid rgba(122,46,21,0.18);
+  }
+  .hero-cd .n {
+    font-family: var(--serif);
+    font-size: 86px; font-weight: 500;
+    letter-spacing: -0.05em;
+    line-height: 0.9;
+    color: var(--phys-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .hero-cd .n .em { font-style: italic; }
+  .hero-cd .u {
+    font-family: var(--mono); font-size: 10.5px;
+    color: var(--phys-ink); opacity: 0.75;
+    letter-spacing: 0.12em; margin-top: 8px;
+  }
+
+  .hero-info { position: relative; z-index: 1; min-width: 0; }
+  .hero-info .l1 {
+    font-size: 11.5px; font-weight: 600;
+    color: var(--phys-ink);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .hero-info .l1 .blip {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--phys-ink);
+    animation: pulse-dot 1.8s infinite;
+  }
+  @keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .hero-info h2 {
+    font-family: var(--serif);
+    font-size: 28px; font-weight: 500;
+    letter-spacing: -0.02em; line-height: 1.15;
+    margin: 0 0 6px;
+    color: var(--ink);
+  }
+  .hero-info h2 .em { font-style: italic; color: var(--phys-ink); font-weight: 500; }
+  .hero-info .meta {
+    display: flex; align-items: center; gap: 14px;
+    font-size: 12.5px; color: var(--ink-2);
+    font-family: var(--mono);
+    flex-wrap: wrap;
+  }
+  .hero-info .meta .dot { color: var(--ink-faint); }
+
+  .hero-ready { position: relative; z-index: 1; text-align: center; }
+  .ready-ring { width: 88px; height: 88px; position: relative; margin: 0 auto 8px; }
+  .ready-ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ready-ring .t { fill: none; stroke: rgba(122,46,21,0.18); stroke-width: 8; }
+  .ready-ring .p { fill: none; stroke: url(#readyGrad); stroke-width: 8; stroke-linecap: round; }
+  .ready-ring .cap {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    font-family: var(--serif); font-size: 22px; font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+  }
+  .ready-ring .cap .pct { font-size: 13px; color: var(--ink-3); margin-left: 1px; }
+  .hero-ready .l { font-size: 10.5px; color: var(--phys-ink); letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; }
+
+  .hero-actions {
+    grid-column: 1 / -1;
+    position: relative; z-index: 1;
+    display: flex; gap: 8px; margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(122,46,21,0.18);
+  }
+  .hero-btn { padding: 7px 14px; border-radius: 9px; font-size: 12.5px; font-weight: 500; }
+  .hero-btn.primary { background: var(--phys-ink); color: white; }
+  .hero-btn.primary:hover { background: #5e2010; }
+  .hero-btn.ghost { background: rgba(255,255,255,0.6); color: var(--phys-ink); }
+  .hero-btn.ghost:hover { background: rgba(255,255,255,0.95); }
+
+  /* Section */
+  .sect { margin-bottom: 30px; }
+  .sect-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; padding: 4px 0; flex-wrap: nowrap; }
+  .sect-head h2 { margin: 0; font-family: var(--serif); font-size: 22px; font-weight: 500; letter-spacing: -0.015em; color: var(--ink); white-space: nowrap; }
+  .sect-head h2 .em { font-style: italic; color: var(--ink-3); font-weight: 400; }
+  .sect-head .count { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+
+  /* Exam card */
+  .exams-grid { display: flex; flex-direction: column; gap: 12px; }
+  .exam-card {
+    background: var(--surface-2);
+    border: 1px solid var(--rule-soft);
+    border-radius: 14px;
+    padding: 18px 22px;
+    display: grid;
+    grid-template-columns: 90px 1fr auto;
+    gap: 20px;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 200ms, box-shadow 200ms, border-color 200ms;
+    position: relative;
+    overflow: hidden;
+  }
+  .exam-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px -12px rgba(60,45,25,0.18);
+    border-color: var(--rule);
+  }
+  .exam-card::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--accent-a), var(--accent-b));
+  }
+  .exam-card.physics { --accent-a: var(--phys-a); --accent-b: var(--phys-b); --accent-ink: var(--phys-ink); }
+  .exam-card.physics2 { --accent-a: #c46442; --accent-b: #e89070; --accent-ink: #6a2810; }
+  .exam-card.cs { --accent-a: var(--cs-a); --accent-b: var(--cs-b); --accent-ink: var(--cs-ink); }
+  .exam-card.eng { --accent-a: var(--eng-a); --accent-b: var(--eng-b); --accent-ink: var(--eng-ink); }
+  .exam-card.phil { --accent-a: var(--phil-a); --accent-b: var(--phil-b); --accent-ink: var(--phil-ink); }
+
+  .ec-cd {
+    text-align: center;
+    border-right: 1px solid var(--rule);
+    padding-right: 18px;
+  }
+  .ec-cd .n {
+    font-family: var(--serif);
+    font-size: 36px; font-weight: 500;
+    letter-spacing: -0.04em; line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .ec-cd.soon .n { color: var(--accent-ink); font-style: italic; }
+  .ec-cd .u { font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); margin-top: 6px; letter-spacing: 0.08em; }
+
+  .ec-body { min-width: 0; }
+  .ec-body .h {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .ec-body .h .t { font-family: var(--serif); font-size: 18px; font-weight: 500; letter-spacing: -0.01em; color: var(--ink); line-height: 1.2; }
+  .ec-body .h .t em { font-style: italic; color: var(--ink-2); font-weight: 400; }
+  .ec-body .meta {
+    display: flex; align-items: center; gap: 12px;
+    font-family: var(--mono); font-size: 11.5px;
+    color: var(--ink-3);
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .ec-body .meta .sep { color: var(--ink-faint); }
+  .ec-body .topics {
+    display: flex; gap: 6px; flex-wrap: wrap;
+    font-size: 11.5px;
+  }
+  .ec-body .topic {
+    padding: 2px 9px; border-radius: 999px;
+    background: rgba(60,45,25,0.05);
+    color: var(--ink-2);
+  }
+  .ec-body .topic.done { color: var(--cs-ink); background: rgba(109,181,140,0.18); }
+  .ec-body .topic.done::before { content: "✓ "; opacity: 0.7; }
+  .ec-body .topic.weak { color: var(--phys-ink); background: rgba(255,141,107,0.16); }
+
+  .ec-prep { text-align: right; min-width: 90px; }
+  .ec-prep .ring { width: 56px; height: 56px; position: relative; margin: 0 0 6px auto; }
+  .ec-prep .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .ec-prep .ring .t { fill: none; stroke: var(--rule); stroke-width: 6; }
+  .ec-prep .ring .p { fill: none; stroke: var(--accent-ink); stroke-width: 6; stroke-linecap: round; }
+  .ec-prep .ring .cap { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--serif); font-size: 14px; font-weight: 500; }
+  .ec-prep .ring .cap .pct { font-size: 9px; color: var(--ink-3); }
+  .ec-prep .lab { font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.04em; text-transform: uppercase; font-weight: 500; }
+
+  .pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500; padding: 2px 9px; border-radius: 999px; flex-shrink: 0; }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .pill.physics { background: rgba(255,141,107,0.16); color: var(--phys-ink); }
+  .pill.physics .dot { background: linear-gradient(135deg, var(--phys-a), var(--phys-b)); }
+  .pill.physics2 { background: rgba(196,100,66,0.18); color: #6a2810; }
+  .pill.physics2 .dot { background: linear-gradient(135deg, #c46442, #e89070); }
+  .pill.cs { background: rgba(109,181,140,0.18); color: var(--cs-ink); }
+  .pill.cs .dot { background: linear-gradient(135deg, var(--cs-a), var(--cs-b)); }
+  .pill.eng { background: rgba(233,183,90,0.22); color: var(--eng-ink); }
+  .pill.eng .dot { background: linear-gradient(135deg, var(--eng-a), var(--eng-b)); }
+  .pill.phil { background: rgba(169,142,212,0.20); color: var(--phil-ink); }
+  .pill.phil .dot { background: linear-gradient(135deg, var(--phil-a), var(--phil-b)); }
+
+  /* Past exam row */
+  .past-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 8px;
+    border-radius: 10px;
+    margin: 0 -8px;
+    transition: background 120ms;
+    cursor: pointer;
+  }
+  .past-row:hover { background: var(--hover); }
+  .past-row .date {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3);
+    min-width: 56px;
+  }
+  .past-row .ttl { font-size: 14px; color: var(--ink); }
+  .past-row .ttl em { font-style: italic; color: var(--ink-2); }
+  .past-row .grade {
+    font-family: var(--serif); font-size: 16px; font-weight: 500;
+    color: var(--ink);
+    padding: 2px 10px; border-radius: 8px;
+    background: rgba(109,181,140,0.18);
+    color: var(--cs-ink);
+  }
+  .past-row .grade.b { background: rgba(233,183,90,0.22); color: var(--eng-ink); }
+
+  /* Right rail */
+  .rail {
+    border-left: 1px solid var(--rule-soft);
+    background: linear-gradient(180deg, var(--surface) 0%, #f7f1e2 100%);
+    padding: 32px 28px 40px;
+    display: flex; flex-direction: column; gap: 26px;
+    overflow-y: auto;
+  }
+  .rail-section .label { font-size: 10.5px; color: var(--ink-3); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; margin-bottom: 12px; display: flex; align-items: baseline; justify-content: space-between; }
+  .rail-section .label .more { text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 11.5px; color: var(--ink-3); cursor: pointer; }
+
+  /* Calendar */
+  .cal {
+    background: var(--surface-2);
+    border: 1px solid var(--rule-soft);
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .cal-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .cal-head .m { font-family: var(--serif); font-size: 16px; font-weight: 500; color: var(--ink); }
+  .cal-head .nav { display: flex; gap: 4px; }
+  .cal-head .nav button { width: 22px; height: 22px; display: grid; place-items: center; color: var(--ink-3); border-radius: 5px; }
+  .cal-head .nav button:hover { background: var(--hover); color: var(--ink); }
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    font-family: var(--mono);
+  }
+  .cal-grid .d {
+    font-size: 9.5px; color: var(--ink-3);
+    text-align: center; padding: 4px 0;
+    letter-spacing: 0.06em;
+  }
+  .cal-grid .day {
+    aspect-ratio: 1;
+    display: grid; place-items: center;
+    font-size: 11px;
+    color: var(--ink-2);
+    border-radius: 6px;
+    cursor: pointer;
+    position: relative;
+    font-variant-numeric: tabular-nums;
+  }
+  .cal-grid .day:hover { background: var(--hover); }
+  .cal-grid .day.muted { color: var(--ink-faint); }
+  .cal-grid .day.today {
+    background: var(--ink); color: white; font-weight: 500;
+  }
+  .cal-grid .day.exam {
+    color: var(--phys-ink); font-weight: 500;
+  }
+  .cal-grid .day.exam::after {
+    content: "";
+    position: absolute;
+    bottom: 3px; left: 50%;
+    transform: translateX(-50%);
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--phys-ink);
+  }
+  .cal-grid .day.exam2::after { background: var(--cs-ink); }
+  .cal-grid .day.exam2 { color: var(--cs-ink); font-weight: 500; }
+  .cal-grid .day.exam3::after { background: var(--phil-ink); }
+  .cal-grid .day.exam3 { color: var(--phil-ink); font-weight: 500; }
+
+  /* Suggested */
+  .suggest {
+    background: linear-gradient(135deg, rgba(255,141,107,0.18), rgba(169,142,212,0.10));
+    border: 1px solid rgba(255,141,107,0.25);
+    border-radius: 14px;
+    padding: 16px 18px;
+  }
+  .suggest .l1 {
+    font-size: 10.5px; font-weight: 600;
+    color: var(--phys-ink);
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .suggest .l1 svg { width: 11px; height: 11px; }
+  .suggest .body {
+    font-family: var(--serif); font-size: 14.5px;
+    font-style: italic; line-height: 1.4;
+    color: var(--ink); margin: 0 0 12px;
+  }
+  .suggest .body b { font-style: normal; font-weight: 600; color: var(--phys-ink); }
+  .suggest .actions { display: flex; gap: 6px; }
+  .suggest .nbtn { padding: 4px 11px; border-radius: 7px; font-size: 11.5px; font-weight: 500; background: rgba(255,255,255,0.7); color: var(--phys-ink); }
+  .suggest .nbtn:hover { background: rgba(255,255,255,1); }
+  .suggest .nbtn.solid { background: var(--phys-ink); color: white; }
+  .suggest .nbtn.solid:hover { background: #5e2010; }
+
+  /* Time invested mini */
+  .invest { display: flex; flex-direction: column; gap: 10px; }
+  .invest-row {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+  .invest-row .name { font-size: 12.5px; color: var(--ink-2); font-weight: 500; }
+  .invest-row .amount { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .invest-row .bar {
+    grid-column: 1 / -1;
+    height: 4px;
+    background: var(--rule);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: -4px;
+  }
+  .invest-row .bar .fill { height: 100%; border-radius: 999px; }
+
+  .hint-foot {
+    margin-top: auto;
+    padding-top: 16px;
+    font-size: 11px;
+    color: var(--ink-3);
+    text-align: center;
+    line-height: 1.6;
+  }
+  .hint-foot .k { font-family: var(--mono); font-size: 10px; padding: 1px 5px; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 3px; color: var(--ink-2); }
+
+  @media (max-width: 1100px) {
+    .canvas { grid-template-columns: 1fr; }
+    .rail { border-left: none; border-top: 1px solid var(--rule-soft); }
+  }
+  @media (max-width: 760px) {
+    .shell { grid-template-columns: 1fr; padding: 6px; }
+    .sidebar { display: none; }
+    .main { padding: 24px 22px 40px; }
+    .hero { grid-template-columns: 1fr; text-align: center; }
+    .hero-cd { border-right: none; border-bottom: 1px solid rgba(122,46,21,0.18); padding: 0 0 16px; }
+    .exam-card { grid-template-columns: 1fr; }
+    .ec-cd { border-right: none; border-bottom: 1px solid var(--rule); padding: 0 0 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="ws">
+      <div class="ws-icon">S</div>
+      <div class="ws-name">Saal's space</div>
+      <span class="ws-chev">⌄</span>
+    </div>
+
+    <div class="cmd">
+      <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="7" cy="7" r="4.5"></circle><path d="M11 11l3.5 3.5"></path>
+      </svg>
+      <span class="placeholder">Search or run command</span>
+      <span class="kbd">⌘K</span>
+    </div>
+
+    <div class="pinned">
+      <a class="pin">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2.5 8 L8 2.5 L13.5 8 L13.5 13.5 L9.5 13.5 L9.5 9.5 L6.5 9.5 L6.5 13.5 L2.5 13.5 Z"></path>
+        </svg>
+        Today
+      </a>
+      <a class="pin">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 4h10M3 8h10M3 12h7"></path>
+        </svg>
+        Tasks
+        <span class="badge">9</span>
+      </a>
+      <a class="pin active">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2.5" y="3.5" width="11" height="9.5" rx="1.5"></rect><path d="M5.5 6.5h5M5.5 9h3"></path>
+        </svg>
+        Exams
+        <span class="badge warn">12d</span>
+      </a>
+      <a class="pin">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2 12 L6 8 L9 11 L14 5"></path>
+        </svg>
+        Tracker
+      </a>
+      <a class="pin">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path>
+        </svg>
+        Focus
+      </a>
+    </div>
+
+    <div class="nav-label">Spaces</div>
+    <div class="spaces">
+      <div class="space"><span class="space-pebble pebble-phys"></span>PHYS 211<span class="count">1</span></div>
+      <div class="space"><span class="space-pebble pebble-phys2"></span>PHYS 311<span class="count">1</span></div>
+      <div class="space"><span class="space-pebble pebble-cs"></span>CS 232<span class="count">1</span></div>
+      <div class="space"><span class="space-pebble pebble-eng"></span>ENG 102<span class="count">1</span></div>
+      <div class="space"><span class="space-pebble pebble-phil"></span>PHIL 240<span class="count">1</span></div>
+    </div>
+
+    <div class="nav-label">Tags</div>
+    <div class="tags">
+      <span class="tag">midterm</span>
+      <span class="tag">final</span>
+      <span class="tag">quiz</span>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="avatar">S</div>
+      <div class="name">Saal Maharaj</div>
+      <svg class="gear" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="8" r="2.5"></circle>
+        <path d="M8 1.5v2M8 12.5v2M14.5 8h-2M3.5 8h-2M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4M12.6 12.6l-1.4-1.4M4.8 4.8L3.4 3.4"></path>
+      </svg>
+    </div>
+  </aside>
+
+  <!-- Canvas -->
+  <main class="canvas">
+
+    <div class="main">
+
+      <div class="topbar">
+        <div class="crumb"><b>Exams</b><span class="sep">·</span>5 upcoming · next in 12 days</div>
+        <div class="right">
+          <button class="ai-btn">
+            <svg class="spark" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M8 2v4M8 10v4M2 8h4M10 8h4M4 4l2 2M10 10l2 2M12 4l-2 2M6 10l-2 2"></path>
+            </svg>
+            Add with AI
+          </button>
+          <button class="new-btn">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"></path></svg>
+            Add exam
+            <span class="kbd">N</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="page-head">
+        <div class="page-eyebrow">Exam season · Week 12</div>
+        <h1 class="page-title">Exams <span class="em">— what's coming.</span></h1>
+        <p class="page-sub">Five exams on the horizon. Quantum is twelve days out and you're 42% ready.</p>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="seg">
+          <button class="seg-btn active">Upcoming<span class="n">5</span></button>
+          <button class="seg-btn">Past<span class="n">8</span></button>
+          <button class="seg-btn">All<span class="n">13</span></button>
+        </div>
+        <div class="right">
+          <button class="view-btn active">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h10M3 8h10M3 12h10"></path></svg>
+            List
+          </button>
+          <button class="view-btn">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="12" height="11" rx="1.5"></rect><path d="M2 6.5h12M5 1.5v3M11 1.5v3"></path></svg>
+            Calendar
+          </button>
+        </div>
+      </div>
+
+      <!-- Hero — soonest -->
+      <div class="hero">
+        <svg width="0" height="0" style="position:absolute;">
+          <defs>
+            <linearGradient id="readyGrad" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#ff8d6b"/>
+              <stop offset="100%" stop-color="#a98ed4"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="hero-cd">
+          <div class="n">12</div>
+          <div class="u">DAYS AWAY</div>
+        </div>
+        <div class="hero-info">
+          <div class="l1"><span class="blip"></span>Soonest · midterm</div>
+          <h2>Quantum Mechanics <span class="em">— midterm.</span></h2>
+          <div class="meta">
+            <span class="pill physics2"><span class="dot"></span>PHYS 311</span>
+            <span class="dot">·</span>
+            <span>Fri May 10 · 2:00 PM</span>
+            <span class="dot">·</span>
+            <span>Hewitt Hall 204</span>
+          </div>
+        </div>
+        <div class="hero-ready">
+          <div class="ready-ring">
+            <svg viewBox="0 0 100 100">
+              <circle class="t" cx="50" cy="50" r="42"/>
+              <circle class="p" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="153"/>
+            </svg>
+            <div class="cap">42<span class="pct">%</span></div>
+          </div>
+          <div class="l">READY</div>
+        </div>
+        <div class="hero-actions">
+          <button class="hero-btn primary">Start study session</button>
+          <button class="hero-btn ghost">Open study plan</button>
+          <button class="hero-btn ghost">Add topic</button>
+        </div>
+      </div>
+
+      <!-- Upcoming exams -->
+      <section class="sect">
+        <div class="sect-head">
+          <h2>Upcoming <span class="em">— in order</span></h2>
+          <span class="count">5</span>
+        </div>
+
+        <div class="exams-grid">
+
+          <!-- Already showed Quantum in hero, skip -->
+
+          <div class="exam-card cs">
+            <div class="ec-cd"><div class="n">26</div><div class="u">DAYS</div></div>
+            <div class="ec-body">
+              <div class="h">
+                <span class="t">Discrete Mathematics <em>— final</em></span>
+                <span class="pill cs"><span class="dot"></span>CS 232</span>
+              </div>
+              <div class="meta">
+                <span>Fri May 24</span><span class="sep">·</span>
+                <span>9:00 AM</span><span class="sep">·</span>
+                <span>Wexler 110</span><span class="sep">·</span>
+                <span>3 hours</span>
+              </div>
+              <div class="topics">
+                <span class="topic done">Logic & proofs</span>
+                <span class="topic done">Sets & relations</span>
+                <span class="topic">Graph theory</span>
+                <span class="topic weak">Recursion</span>
+                <span class="topic">Counting</span>
+              </div>
+            </div>
+            <div class="ec-prep">
+              <div class="ring">
+                <svg viewBox="0 0 100 100">
+                  <circle class="t" cx="50" cy="50" r="42"/>
+                  <circle class="p" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="79"/>
+                </svg>
+                <div class="cap">70<span class="pct">%</span></div>
+              </div>
+              <div class="lab">READY</div>
+            </div>
+          </div>
+
+          <div class="exam-card phil">
+            <div class="ec-cd"><div class="n">31</div><div class="u">DAYS</div></div>
+            <div class="ec-body">
+              <div class="h">
+                <span class="t">Foucault & Power <em>— take-home</em></span>
+                <span class="pill phil"><span class="dot"></span>PHIL 240</span>
+              </div>
+              <div class="meta">
+                <span>Wed May 29</span><span class="sep">·</span>
+                <span>Released 9 AM</span><span class="sep">·</span>
+                <span>48hr window</span>
+              </div>
+              <div class="topics">
+                <span class="topic done">Discipline & Punish</span>
+                <span class="topic">Panopticism</span>
+                <span class="topic">Biopower</span>
+              </div>
+            </div>
+            <div class="ec-prep">
+              <div class="ring">
+                <svg viewBox="0 0 100 100">
+                  <circle class="t" cx="50" cy="50" r="42"/>
+                  <circle class="p" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="185"/>
+                </svg>
+                <div class="cap">30<span class="pct">%</span></div>
+              </div>
+              <div class="lab">READY</div>
+            </div>
+          </div>
+
+          <div class="exam-card eng">
+            <div class="ec-cd"><div class="n">38</div><div class="u">DAYS</div></div>
+            <div class="ec-body">
+              <div class="h">
+                <span class="t">Persuasive essay <em>— final</em></span>
+                <span class="pill eng"><span class="dot"></span>ENG 102</span>
+              </div>
+              <div class="meta">
+                <span>Wed Jun 5</span><span class="sep">·</span>
+                <span>Due by 11:59 PM</span><span class="sep">·</span>
+                <span>2,000 words</span>
+              </div>
+              <div class="topics">
+                <span class="topic">Outline</span>
+                <span class="topic">Draft</span>
+                <span class="topic">Revisions</span>
+              </div>
+            </div>
+            <div class="ec-prep">
+              <div class="ring">
+                <svg viewBox="0 0 100 100">
+                  <circle class="t" cx="50" cy="50" r="42"/>
+                  <circle class="p" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="237"/>
+                </svg>
+                <div class="cap">10<span class="pct">%</span></div>
+              </div>
+              <div class="lab">READY</div>
+            </div>
+          </div>
+
+          <div class="exam-card physics">
+            <div class="ec-cd"><div class="n">45</div><div class="u">DAYS</div></div>
+            <div class="ec-body">
+              <div class="h">
+                <span class="t">Mechanics <em>— final</em></span>
+                <span class="pill physics"><span class="dot"></span>PHYS 211</span>
+              </div>
+              <div class="meta">
+                <span>Wed Jun 12</span><span class="sep">·</span>
+                <span>10:00 AM</span><span class="sep">·</span>
+                <span>Hewitt 204</span><span class="sep">·</span>
+                <span>Cumulative</span>
+              </div>
+              <div class="topics">
+                <span class="topic">Kinematics</span>
+                <span class="topic">Newton's laws</span>
+                <span class="topic">Energy & work</span>
+                <span class="topic">Oscillations</span>
+                <span class="topic">Rotational</span>
+              </div>
+            </div>
+            <div class="ec-prep">
+              <div class="ring">
+                <svg viewBox="0 0 100 100">
+                  <circle class="t" cx="50" cy="50" r="42"/>
+                  <circle class="p" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="211"/>
+                </svg>
+                <div class="cap">20<span class="pct">%</span></div>
+              </div>
+              <div class="lab">READY</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Past -->
+      <section class="sect">
+        <div class="sect-head">
+          <h2>Recently past <span class="em">— for the record</span></h2>
+          <span class="count">3</span>
+        </div>
+        <div class="past-row">
+          <span class="date">Apr 24</span>
+          <span class="ttl">Quiz 4 — <em>Lagrangian mechanics</em></span>
+          <span class="pill physics2"><span class="dot"></span>PHYS 311</span>
+          <span class="grade">A−</span>
+        </div>
+        <div class="past-row">
+          <span class="date">Apr 15</span>
+          <span class="ttl">Midterm — <em>Algorithms</em></span>
+          <span class="pill cs"><span class="dot"></span>CS 232</span>
+          <span class="grade b">B+</span>
+        </div>
+        <div class="past-row">
+          <span class="date">Apr 03</span>
+          <span class="ttl">Reading exam — <em>Plato's Republic</em></span>
+          <span class="pill phil"><span class="dot"></span>PHIL 240</span>
+          <span class="grade">A</span>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Right rail -->
+    <aside class="rail">
+
+      <!-- Mini calendar -->
+      <div class="rail-section">
+        <div class="label">May 2026 <span class="more">View all</span></div>
+        <div class="cal">
+          <div class="cal-head">
+            <div class="m">May</div>
+            <div class="nav">
+              <button>‹</button>
+              <button>›</button>
+            </div>
+          </div>
+          <div class="cal-grid">
+            <div class="d">S</div><div class="d">M</div><div class="d">T</div><div class="d">W</div><div class="d">T</div><div class="d">F</div><div class="d">S</div>
+            <div class="day muted">27</div><div class="day muted">28</div><div class="day muted">29</div><div class="day muted">30</div><div class="day">1</div><div class="day">2</div><div class="day">3</div>
+            <div class="day">4</div><div class="day">5</div><div class="day">6</div><div class="day">7</div><div class="day">8</div><div class="day today">9</div><div class="day exam">10</div>
+            <div class="day">11</div><div class="day">12</div><div class="day">13</div><div class="day">14</div><div class="day">15</div><div class="day">16</div><div class="day">17</div>
+            <div class="day">18</div><div class="day">19</div><div class="day">20</div><div class="day">21</div><div class="day">22</div><div class="day">23</div><div class="day exam2">24</div>
+            <div class="day">25</div><div class="day">26</div><div class="day">27</div><div class="day">28</div><div class="day exam3">29</div><div class="day">30</div><div class="day">31</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Suggested -->
+      <div class="rail-section">
+        <div class="label">Next session</div>
+        <div class="suggest">
+          <div class="l1">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg>
+            AI suggestion
+          </div>
+          <p class="body">Spend tonight on <b>Quantum Ch. 3 — perturbation theory</b>. It's your weakest topic and counts for ~30% of the midterm.</p>
+          <div class="actions">
+            <button class="nbtn solid">Start 50 min</button>
+            <button class="nbtn">Other topic</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time invested -->
+      <div class="rail-section">
+        <div class="label">Time invested <span class="more">This week</span></div>
+        <div class="invest">
+          <div class="invest-row">
+            <span class="course-pebble pebble-phys2" style="width:10px;height:10px;border-radius:3px;display:inline-block;background:linear-gradient(135deg,#c46442,#e89070);"></span>
+            <span class="name">Quantum</span>
+            <span class="amount">3h 20m</span>
+            <div class="bar"><div class="fill" style="width:75%;background:linear-gradient(90deg,#c46442,#e89070);"></div></div>
+          </div>
+          <div class="invest-row">
+            <span class="course-pebble pebble-cs" style="width:10px;height:10px;border-radius:3px;display:inline-block;background:linear-gradient(135deg,var(--cs-a),var(--cs-b));"></span>
+            <span class="name">Discrete</span>
+            <span class="amount">2h 10m</span>
+            <div class="bar"><div class="fill" style="width:50%;background:linear-gradient(90deg,var(--cs-a),var(--cs-b));"></div></div>
+          </div>
+          <div class="invest-row">
+            <span class="course-pebble pebble-phil" style="width:10px;height:10px;border-radius:3px;display:inline-block;background:linear-gradient(135deg,var(--phil-a),var(--phil-b));"></span>
+            <span class="name">Foucault</span>
+            <span class="amount">45m</span>
+            <div class="bar"><div class="fill" style="width:18%;background:linear-gradient(90deg,var(--phil-a),var(--phil-b));"></div></div>
+          </div>
+          <div class="invest-row">
+            <span class="course-pebble pebble-eng" style="width:10px;height:10px;border-radius:3px;display:inline-block;background:linear-gradient(135deg,var(--eng-a),var(--eng-b));"></span>
+            <span class="name">ENG 102</span>
+            <span class="amount">0m</span>
+            <div class="bar"><div class="fill" style="width:0%;background:linear-gradient(90deg,var(--eng-a),var(--eng-b));"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hint-foot">
+        <span class="k">N</span> add exam · <span class="k">space</span> start session
+      </div>
+
+    </aside>
+
+  </main>
+
+</div>
+
+<script>
+  document.querySelectorAll('.seg-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.parentElement.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      btn.parentElement.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+</script>
+
+</body>
+</html>

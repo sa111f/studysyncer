@@ -41,4 +41,7 @@ public class Pomodoro {
 
     @Column(nullable = false)
     private Boolean completed;
+
+    @Column(name = "planned_duration_seconds", nullable = false)
+    private Integer plannedDurationSeconds = 1500;
 }

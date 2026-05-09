@@ -6,6 +6,7 @@ import com.studysyncer.backend.domain.StudySession;
 import com.studysyncer.backend.domain.User;
 import com.studysyncer.backend.repository.CourseRepository;
 import com.studysyncer.backend.repository.DailyGoalRepository;
+import com.studysyncer.backend.repository.PomodoroRepository;
 import com.studysyncer.backend.repository.StudySessionRepository;
 import com.studysyncer.backend.web.view.Formatters;
 import com.studysyncer.backend.web.view.TrackerView;
@@ -41,15 +42,18 @@ public class TrackerService {
     private final StudySessionRepository sessionRepo;
     private final CourseRepository courseRepo;
     private final DailyGoalRepository goalRepo;
+    private final PomodoroRepository pomodoroRepo;
     private final Formatters formatters;
 
     public TrackerService(StudySessionRepository sessionRepo,
                           CourseRepository courseRepo,
                           DailyGoalRepository goalRepo,
+                          PomodoroRepository pomodoroRepo,
                           Formatters formatters) {
         this.sessionRepo = sessionRepo;
         this.courseRepo = courseRepo;
         this.goalRepo = goalRepo;
+        this.pomodoroRepo = pomodoroRepo;
         this.formatters = formatters;
     }
 
@@ -169,8 +173,18 @@ public class TrackerService {
         int avgSessionMins = sessionsCount == 0 ? 0 : totalMinutes / sessionsCount;
         String sessionsAvgLabel = "avg " + avgSessionMins + " min";
 
-        int pomodorosCount = totalMinutes / 25;
-        String pomodorosCompletionLabel = "~93% completion";
+        long totalPomos = pomodoroRepo.countBySession_User(user);
+        long completedPomos = pomodoroRepo.countBySession_UserAndCompletedTrue(user);
+        int pomodorosCount;
+        String pomodorosCompletionLabel;
+        if (totalPomos == 0) {
+            pomodorosCount = 0;
+            pomodorosCompletionLabel = "no completed pomodoros yet";
+        } else {
+            int pct = (int) Math.round(100.0 * completedPomos / totalPomos);
+            pomodorosCount = (int) totalPomos;
+            pomodorosCompletionLabel = "~" + pct + "% completion";
+        }
 
         int streakDays = computeStreak(user, startOfToday, tz);
         String streakBestLabel = "best · 12 days";

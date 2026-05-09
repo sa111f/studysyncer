@@ -1,0 +1,924 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>StudySyncer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* Bear-inspired warm paper base */
+    --bg:           #f5f0e6;
+    --bg-2:         #ede6d5;
+    --surface:      #fbf7ec;
+    --surface-2:    #ffffff;
+    --hover:        #efe9da;
+
+    /* Ink */
+    --ink:          #2a221a;
+    --ink-2:        #4a3f30;
+    --ink-3:        #8a7c66;
+    --ink-faint:    #c4b89e;
+    --rule:         rgba(60, 45, 25, 0.12);
+    --rule-soft:    rgba(60, 45, 25, 0.06);
+
+    /* Arc-inspired course "spaces" — vivid gradients per course */
+    --phys-a:       #ff8d6b;
+    --phys-b:       #ffb8a0;
+    --phys-ink:     #7a2e15;
+
+    --cs-a:         #6db58c;
+    --cs-b:         #a9d9ba;
+    --cs-ink:       #1f4a30;
+
+    --eng-a:        #e9b75a;
+    --eng-b:        #f4d28e;
+    --eng-ink:      #6a4810;
+
+    --phil-a:       #a98ed4;
+    --phil-b:       #cfbce8;
+    --phil-ink:     #422968;
+
+    /* Sidebar accent — current space (CS) */
+    --space-a:      var(--cs-a);
+    --space-b:      var(--cs-b);
+    --space-ink:    var(--cs-ink);
+
+    --serif: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+    --sans:  'Inter', -apple-system, system-ui, sans-serif;
+    --mono:  'JetBrains Mono', ui-monospace, monospace;
+
+    --t: 220ms cubic-bezier(0.32, 0.72, 0.24, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+  }
+  button { font: inherit; color: inherit; background: none; border: none; cursor: pointer; padding: 0; }
+
+  /* ─── Shell: Arc-style three-zone layout ─── */
+  .shell {
+    display: grid;
+    grid-template-columns: 248px 1fr;
+    min-height: 100vh;
+    padding: 10px;
+    gap: 10px;
+    background:
+      radial-gradient(1100px 600px at 0% 0%, rgba(169, 142, 212, 0.18), transparent 60%),
+      radial-gradient(900px 500px at 100% 100%, rgba(109, 181, 140, 0.15), transparent 65%),
+      var(--bg);
+  }
+
+  /* ─── Sidebar (Arc) ─── */
+  .sidebar {
+    background: linear-gradient(170deg, var(--space-a) 0%, var(--space-b) 60%, transparent 110%), var(--bg-2);
+    border-radius: 16px;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.4),
+      0 1px 2px rgba(60,45,25,0.04);
+    color: var(--space-ink);
+    transition: background var(--t);
+  }
+  .ws {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .ws:hover { background: rgba(255,255,255,0.4); }
+  .ws-icon {
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.65);
+    color: var(--space-ink);
+    display: grid; place-items: center;
+    font-family: var(--serif); font-weight: 600;
+    font-size: 14px;
+  }
+  .ws-name {
+    flex: 1;
+    font-size: 13.5px; font-weight: 600; letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .ws-chev { color: var(--ink-3); font-size: 11px; opacity: 0.7; }
+
+  /* Cmd-K bar (Arc lockup) */
+  .cmd {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 11px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(255,255,255,0.7);
+    color: var(--ink-2);
+    font-size: 12.5px;
+    margin-bottom: 14px;
+    cursor: text;
+  }
+  .cmd:hover { background: rgba(255,255,255,0.8); }
+  .cmd .ic {
+    width: 13px; height: 13px; opacity: 0.7;
+    flex-shrink: 0;
+  }
+  .cmd .placeholder { flex: 1; color: var(--ink-3); }
+  .cmd .kbd {
+    font-family: var(--mono); font-size: 10px;
+    padding: 1px 6px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 4px;
+    color: var(--ink-2);
+    border: 1px solid var(--rule-soft);
+  }
+
+  .nav-label {
+    font-size: 10.5px; color: var(--ink-3);
+    padding: 12px 12px 4px; font-weight: 600;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .pinned { display: flex; flex-direction: column; gap: 1px; }
+  .pin {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 13px; color: var(--ink-2);
+    cursor: pointer;
+    transition: background 120ms;
+  }
+  .pin:hover { background: rgba(255,255,255,0.45); color: var(--ink); }
+  .pin.active { background: rgba(255,255,255,0.75); color: var(--ink); font-weight: 500; }
+  .pin .ic { width: 14px; height: 14px; opacity: 0.75; flex-shrink: 0; }
+  .pin .badge {
+    margin-left: auto;
+    font-family: var(--mono); font-size: 10px;
+    background: rgba(0,0,0,0.06); color: var(--ink-2);
+    padding: 1px 7px; border-radius: 999px;
+    font-weight: 500;
+  }
+  .pin .badge.warn { background: rgba(255,141,107,0.25); color: var(--phys-ink); }
+
+  /* Course "spaces" */
+  .spaces { display: flex; flex-direction: column; gap: 2px; padding: 0 2px; }
+  .space {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--ink-2);
+    cursor: pointer;
+    position: relative;
+  }
+  .space:hover { background: rgba(255,255,255,0.45); color: var(--ink); }
+  .space.current { background: rgba(255,255,255,0.85); color: var(--ink); font-weight: 500; }
+  .space-pebble {
+    width: 14px; height: 14px;
+    border-radius: 5px;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+  }
+  .pebble-phys { background: linear-gradient(135deg, var(--phys-a), var(--phys-b)); }
+  .pebble-phys2 { background: linear-gradient(135deg, #c46442, #e89070); }
+  .pebble-cs { background: linear-gradient(135deg, var(--cs-a), var(--cs-b)); }
+  .pebble-eng { background: linear-gradient(135deg, var(--eng-a), var(--eng-b)); }
+  .pebble-phil { background: linear-gradient(135deg, var(--phil-a), var(--phil-b)); }
+  .space .count {
+    margin-left: auto;
+    font-family: var(--mono); font-size: 10px;
+    color: var(--ink-3);
+  }
+
+  /* Bear-style #tags pinned */
+  .tags { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 8px; margin-top: 4px; }
+  .tag {
+    font-size: 11.5px;
+    color: var(--ink-2);
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.5);
+    cursor: pointer;
+  }
+  .tag:hover { background: rgba(255,255,255,0.85); }
+  .tag::before { content: "#"; color: var(--ink-3); margin-right: 1px; }
+
+  .sidebar-foot {
+    margin-top: auto;
+    padding: 10px 10px 4px;
+    border-top: 1px solid rgba(255,255,255,0.5);
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+  }
+  .avatar {
+    width: 26px; height: 26px;
+    background: linear-gradient(135deg, var(--phys-a), var(--phil-a));
+    color: white;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font-family: var(--serif); font-size: 13px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .sidebar-foot .name { flex: 1; color: var(--ink); font-weight: 500; }
+  .sidebar-foot .gear { color: var(--ink-3); width: 14px; height: 14px; }
+
+  /* ─── Main canvas ─── */
+  .canvas {
+    background: var(--surface);
+    border-radius: 16px;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.6),
+      0 12px 28px -16px rgba(60,45,25,0.18),
+      0 1px 2px rgba(60,45,25,0.04);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 340px;
+  }
+
+  /* Main column */
+  .main { padding: 32px 44px 56px; min-width: 0; }
+
+  /* Top bar */
+  .topbar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 36px;
+  }
+  .crumb {
+    font-size: 12.5px; color: var(--ink-3);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .crumb b { color: var(--ink-2); font-weight: 500; }
+  .crumb .sep { color: var(--ink-faint); }
+  .topbar .right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+  .ibtn {
+    width: 30px; height: 30px;
+    display: grid; place-items: center;
+    border-radius: 8px;
+    color: var(--ink-3);
+    transition: background 120ms, color 120ms;
+  }
+  .ibtn:hover { background: var(--hover); color: var(--ink); }
+  .new-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 13px;
+    background: var(--ink); color: var(--surface);
+    border-radius: 9px;
+    font-size: 12.5px; font-weight: 500;
+  }
+  .new-btn:hover { background: #1a140e; }
+  .new-btn .kbd {
+    font-family: var(--mono); font-size: 10px;
+    background: rgba(255,255,255,0.18);
+    padding: 1px 5px; border-radius: 3px;
+    margin-left: 2px;
+  }
+
+  /* Greeting — Bear typography */
+  .greet {
+    margin-bottom: 36px;
+  }
+  .greet-eyebrow {
+    font-size: 12px; color: var(--ink-3);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .greet-title {
+    font-family: var(--serif);
+    font-size: 44px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1.05;
+    margin: 0 0 6px;
+    color: var(--ink);
+  }
+  .greet-title .em { font-style: italic; color: var(--phys-ink); font-weight: 500; }
+  .greet-sub {
+    font-family: var(--serif); font-size: 18px;
+    color: var(--ink-2);
+    font-style: italic;
+    line-height: 1.4;
+    margin: 0;
+    max-width: 520px;
+  }
+
+  /* Hero focus card — Arc gradient surface */
+  .focus-hero {
+    margin-bottom: 36px;
+    border-radius: 14px;
+    padding: 22px 26px;
+    background:
+      radial-gradient(circle at 80% 20%, rgba(109,181,140,0.45), transparent 55%),
+      linear-gradient(135deg, rgba(109,181,140,0.18), rgba(255,141,107,0.10));
+    border: 1px solid rgba(109,181,140,0.25);
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 22px;
+    align-items: center;
+  }
+  .focus-orb {
+    width: 64px; height: 64px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .focus-orb svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .focus-orb .t { fill: none; stroke: rgba(31,74,48,0.18); stroke-width: 5; }
+  .focus-orb .p { fill: none; stroke: var(--cs-ink); stroke-width: 5; stroke-linecap: round; }
+  .focus-orb .pulse {
+    position: absolute; inset: -3px;
+    border-radius: 50%;
+    border: 2px solid var(--cs-ink);
+    opacity: 0;
+    animation: pulse 2.6s infinite;
+  }
+  @keyframes pulse {
+    0% { transform: scale(1); opacity: 0.4; }
+    80%, 100% { transform: scale(1.35); opacity: 0; }
+  }
+
+  .focus-info .l1 {
+    font-size: 11.5px; font-weight: 600;
+    color: var(--cs-ink);
+    letter-spacing: 0.04em; text-transform: uppercase;
+    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .focus-info .live-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--cs-ink);
+    box-shadow: 0 0 0 0 rgba(31,74,48,0.6);
+    animation: blip 1.6s infinite;
+  }
+  @keyframes blip {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(31,74,48,0.6); }
+    50% { box-shadow: 0 0 0 6px rgba(31,74,48,0); }
+  }
+  .focus-info .l2 {
+    font-family: var(--serif); font-size: 19px; font-weight: 500;
+    color: var(--ink); letter-spacing: -0.015em;
+  }
+  .focus-info .l2 .ctx { color: var(--ink-3); font-style: italic; font-weight: 400; }
+  .focus-time {
+    font-family: var(--serif); font-size: 36px; font-weight: 500;
+    letter-spacing: -0.04em; font-variant-numeric: tabular-nums;
+    color: var(--ink); line-height: 1;
+  }
+  .focus-actions { display: flex; gap: 6px; align-self: end; }
+  .ghost-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px; font-weight: 500;
+    background: rgba(255,255,255,0.6);
+    color: var(--cs-ink);
+  }
+  .ghost-btn:hover { background: rgba(255,255,255,0.95); }
+  .ghost-btn.solid { background: var(--cs-ink); color: white; }
+  .ghost-btn.solid:hover { background: #163823; }
+
+  /* Sections */
+  .sect { margin-bottom: 32px; }
+  .sect-head {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 8px;
+    padding: 4px 0;
+  }
+  .sect-head h2 {
+    margin: 0;
+    font-family: var(--serif);
+    font-size: 22px; font-weight: 500;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+  .sect-head h2 .em { font-style: italic; color: var(--ink-3); font-weight: 400; }
+  .sect-head .count {
+    font-family: var(--mono); font-size: 11px;
+    color: var(--ink-3);
+  }
+  .sect-head .add {
+    margin-left: auto;
+    color: var(--ink-3);
+    font-size: 12px;
+    padding: 4px 9px;
+    border-radius: 6px;
+  }
+  .sect-head .add:hover { background: var(--hover); color: var(--ink); }
+  .sect.alert .sect-head h2 { color: var(--phys-ink); }
+
+  /* Row — Bear-list inspired */
+  .row {
+    display: grid;
+    grid-template-columns: 22px 1fr auto auto;
+    gap: 14px;
+    align-items: center;
+    padding: 10px 8px;
+    border-radius: 10px;
+    margin: 0 -8px;
+    transition: background 120ms;
+    cursor: pointer;
+  }
+  .row:hover { background: var(--hover); }
+  .check {
+    width: 17px; height: 17px;
+    border: 1.5px solid var(--ink-faint);
+    border-radius: 6px;
+    background: var(--surface-2);
+    transition: border-color 120ms, background 120ms;
+  }
+  .check:hover { border-color: var(--ink-2); }
+  .check.overdue { border-color: var(--phys-ink); }
+
+  .row-title {
+    display: flex; align-items: center; gap: 10px;
+    min-width: 0;
+  }
+  .row-title .text {
+    font-size: 14.5px; font-weight: 450;
+    color: var(--ink);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    line-height: 1.3;
+  }
+  .row-title .text em { font-style: italic; color: var(--ink-2); font-weight: 400; }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 500;
+    padding: 2px 9px;
+    border-radius: 999px;
+    flex-shrink: 0;
+  }
+  .pill .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+  }
+  .pill.physics { background: rgba(255,141,107,0.16); color: var(--phys-ink); }
+  .pill.physics .dot { background: linear-gradient(135deg, var(--phys-a), var(--phys-b)); }
+  .pill.cs { background: rgba(109,181,140,0.18); color: var(--cs-ink); }
+  .pill.cs .dot { background: linear-gradient(135deg, var(--cs-a), var(--cs-b)); }
+  .pill.eng { background: rgba(233,183,90,0.22); color: var(--eng-ink); }
+  .pill.eng .dot { background: linear-gradient(135deg, var(--eng-a), var(--eng-b)); }
+  .pill.phil { background: rgba(169,142,212,0.20); color: var(--phil-ink); }
+  .pill.phil .dot { background: linear-gradient(135deg, var(--phil-a), var(--phil-b)); }
+
+  .due {
+    font-family: var(--mono); font-size: 11.5px;
+    color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    min-width: 56px;
+  }
+  .due.overdue { color: var(--phys-ink); font-weight: 500; }
+  .due.soon { color: var(--eng-ink); }
+
+  .row-action {
+    color: var(--ink-3);
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    border-radius: 6px;
+    opacity: 0;
+    transition: opacity 120ms;
+  }
+  .row:hover .row-action { opacity: 1; }
+  .row-action:hover { background: rgba(0,0,0,0.06); color: var(--ink); }
+
+  /* ─── Right rail ─── */
+  .rail {
+    border-left: 1px solid var(--rule-soft);
+    background: linear-gradient(180deg, var(--surface) 0%, #f7f1e2 100%);
+    padding: 32px 28px 40px;
+    display: flex; flex-direction: column; gap: 28px;
+    overflow-y: auto;
+  }
+
+  .rail-section .label {
+    font-size: 10.5px;
+    color: var(--ink-3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .rail-section .label .more {
+    text-transform: none; letter-spacing: 0;
+    font-weight: 500; font-size: 11.5px;
+    color: var(--ink-3);
+    cursor: pointer;
+  }
+  .rail-section .label .more:hover { color: var(--ink); }
+
+  /* Goal card */
+  .goal {
+    background: var(--surface-2);
+    border: 1px solid var(--rule-soft);
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 1px 2px rgba(60,45,25,0.04);
+  }
+  .goal-row { display: flex; align-items: center; gap: 16px; }
+  .donut { width: 70px; height: 70px; position: relative; flex-shrink: 0; }
+  .donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .donut .t { fill: none; stroke: var(--rule); stroke-width: 8; }
+  .donut .p {
+    fill: none; stroke: url(#goalGrad); stroke-width: 8; stroke-linecap: round;
+  }
+  .donut .cap {
+    position: absolute; inset: 0;
+    display: grid; place-items: center;
+    font-family: var(--serif); font-size: 18px; font-weight: 500;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .goal-info .h {
+    font-family: var(--serif); font-size: 22px; font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--ink); line-height: 1.1;
+  }
+  .goal-info .h .unit { font-size: 13px; color: var(--ink-3); font-style: italic; font-weight: 400; }
+  .goal-info .s {
+    font-size: 12px; color: var(--ink-3);
+    font-family: var(--mono);
+    margin-top: 4px;
+  }
+
+  /* Exam mini cards */
+  .exam {
+    background: var(--surface-2);
+    border: 1px solid var(--rule-soft);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px;
+    align-items: center;
+    cursor: pointer;
+    transition: transform 200ms, box-shadow 200ms;
+  }
+  .exam:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px -10px rgba(60,45,25,0.18);
+  }
+  .exam .cd {
+    width: 48px;
+    text-align: center;
+  }
+  .exam .cd .n {
+    font-family: var(--serif);
+    font-size: 28px; font-weight: 500;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .exam .cd .u {
+    font-family: var(--mono); font-size: 9.5px;
+    color: var(--ink-3); margin-top: 4px;
+    letter-spacing: 0.06em;
+  }
+  .exam.soon .cd .n { color: var(--phys-ink); font-style: italic; }
+  .exam-body .t {
+    font-size: 13.5px; font-weight: 500;
+    color: var(--ink); line-height: 1.3;
+    margin-bottom: 4px;
+  }
+  .exam-body .s {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11.5px; color: var(--ink-3);
+    font-family: var(--mono);
+  }
+
+  /* Stats */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .stat {
+    background: var(--surface-2);
+    border: 1px solid var(--rule-soft);
+    border-radius: 10px;
+    padding: 12px 10px;
+    text-align: center;
+  }
+  .stat .n {
+    font-family: var(--serif); font-size: 22px; font-weight: 500;
+    letter-spacing: -0.025em; line-height: 1;
+    color: var(--ink);
+  }
+  .stat .n .u {
+    font-size: 11px; color: var(--ink-3);
+    font-family: var(--mono); font-weight: 400;
+    margin-left: 1px;
+  }
+  .stat .l {
+    font-size: 10.5px; color: var(--ink-3);
+    margin-top: 6px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* Footer hint */
+  .hint {
+    margin-top: auto;
+    padding-top: 16px;
+    font-size: 11px;
+    color: var(--ink-3);
+    text-align: center;
+    line-height: 1.6;
+  }
+  .hint .k {
+    font-family: var(--mono); font-size: 10px;
+    padding: 1px 5px;
+    background: var(--surface-2);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 1100px) {
+    .canvas { grid-template-columns: 1fr; }
+    .rail { border-left: none; border-top: 1px solid var(--rule-soft); }
+  }
+  @media (max-width: 760px) {
+    .shell { grid-template-columns: 1fr; padding: 6px; }
+    .sidebar { display: none; }
+    .main { padding: 24px 22px 40px; }
+    .focus-hero { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- Sidebar (Arc-style) -->
+  <aside class="sidebar">
+    <div class="ws">
+      <div class="ws-icon">S</div>
+      <div class="ws-name">Saal's space</div>
+      <span class="ws-chev">⌄</span>
+    </div>
+
+    <div class="cmd">
+      <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="7" cy="7" r="4.5"/><path d="M11 11l3.5 3.5"/>
+      </svg>
+      <span class="placeholder">Search or run command</span>
+      <span class="kbd">⌘K</span>
+    </div>
+
+    <div class="pinned">
+      <a class="pin active">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2.5 8 L8 2.5 L13.5 8 L13.5 13.5 L9.5 13.5 L9.5 9.5 L6.5 9.5 L6.5 13.5 L2.5 13.5 Z"/>
+        </svg>
+        Today
+      </a>
+      <a class="pin">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 4h10M3 8h10M3 12h7"/>
+        </svg>
+        Tasks
+        <span class="badge">7</span>
+      </a>
+      <a class="pin">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="2.5" y="3.5" width="11" height="9.5" rx="1.5"/><path d="M5.5 6.5h5M5.5 9h3"/>
+        </svg>
+        Exams
+        <span class="badge warn">12d</span>
+      </a>
+      <a class="pin">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M2 12 L6 8 L9 11 L14 5"/>
+        </svg>
+        Tracker
+      </a>
+      <a class="pin">
+        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/>
+        </svg>
+        Focus
+      </a>
+    </div>
+
+    <div class="nav-label">Spaces</div>
+    <div class="spaces">
+      <div class="space"><span class="space-pebble pebble-phys"></span>PHYS 211<span class="count">3</span></div>
+      <div class="space"><span class="space-pebble pebble-phys2"></span>PHYS 311<span class="count">1</span></div>
+      <div class="space current"><span class="space-pebble pebble-cs"></span>CS 232<span class="count">2</span></div>
+      <div class="space"><span class="space-pebble pebble-eng"></span>ENG 102<span class="count">2</span></div>
+      <div class="space"><span class="space-pebble pebble-phil"></span>PHIL 240<span class="count">1</span></div>
+    </div>
+
+    <div class="nav-label">Tags</div>
+    <div class="tags">
+      <span class="tag">midterm</span>
+      <span class="tag">writeup</span>
+      <span class="tag">reading</span>
+      <span class="tag">lab</span>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="avatar">S</div>
+      <div class="name">Saal Maharaj</div>
+      <svg class="gear" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <circle cx="8" cy="8" r="2.5"/>
+        <path d="M8 1.5v2M8 12.5v2M14.5 8h-2M3.5 8h-2M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4M12.6 12.6l-1.4-1.4M4.8 4.8L3.4 3.4"/>
+      </svg>
+    </div>
+  </aside>
+
+  <!-- Canvas -->
+  <main class="canvas">
+
+    <div class="main">
+
+      <div class="topbar">
+        <div class="crumb"><b>Today</b><span class="sep">·</span>Tuesday, May 9</div>
+        <div class="right">
+          <button class="ibtn" title="Filter">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 4h12M4 8h8M6 12h4"/></svg>
+          </button>
+          <button class="ibtn" title="Calendar">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>
+          </button>
+          <button class="new-btn">
+            <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
+            New
+            <span class="kbd">N</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="greet">
+        <div class="greet-eyebrow">Tuesday evening · Week 12</div>
+        <h1 class="greet-title">Good evening, <span class="em">Saal.</span></h1>
+        <p class="greet-sub">Three things due tonight, one writeup overdue, and Quantum is in twelve days.</p>
+      </div>
+
+      <!-- Focus hero -->
+      <div class="focus-hero">
+        <div class="focus-orb">
+          <svg viewBox="0 0 64 64">
+            <circle class="t" cx="32" cy="32" r="26"/>
+            <circle class="p" cx="32" cy="32" r="26" stroke-dasharray="163" stroke-dashoffset="118"/>
+          </svg>
+          <span class="pulse"></span>
+        </div>
+        <div class="focus-info">
+          <div class="l1"><span class="live-dot"></span>In session · pomodoro 1 of 4</div>
+          <div class="l2">Problem set 3 <span class="ctx">— CS 232</span></div>
+        </div>
+        <div class="focus-time">39:21</div>
+        <div class="focus-actions" style="grid-column: 3; align-self: center;">
+          <button class="ghost-btn">Pause</button>
+          <button class="ghost-btn solid">End</button>
+        </div>
+      </div>
+
+      <!-- Overdue -->
+      <section class="sect alert">
+        <div class="sect-head">
+          <h2>Overdue <span class="em">— attend first</span></h2>
+          <span class="count">1</span>
+        </div>
+        <div class="row">
+          <div class="check overdue"></div>
+          <div class="row-title"><span class="text">Lab 2 writeup</span><span class="pill physics"><span class="dot"></span>PHYS 211</span></div>
+          <div class="due overdue">3d late</div>
+          <div class="row-action">⋯</div>
+        </div>
+      </section>
+
+      <!-- Today -->
+      <section class="sect">
+        <div class="sect-head">
+          <h2>Today</h2>
+          <span class="count">3</span>
+          <span class="add">+ Add task</span>
+        </div>
+        <div class="row">
+          <div class="check"></div>
+          <div class="row-title"><span class="text">Read Ch. 4 — <em>Equilibrium</em></span><span class="pill physics"><span class="dot"></span>PHYS 211</span></div>
+          <div class="due">9 PM</div>
+          <div class="row-action">⋯</div>
+        </div>
+        <div class="row">
+          <div class="check"></div>
+          <div class="row-title"><span class="text">Problem set 3</span><span class="pill cs"><span class="dot"></span>CS 232</span></div>
+          <div class="due soon">11 PM</div>
+          <div class="row-action">⋯</div>
+        </div>
+        <div class="row">
+          <div class="check"></div>
+          <div class="row-title"><span class="text">Draft intro paragraph</span><span class="pill eng"><span class="dot"></span>ENG 102</span></div>
+          <div class="due">EOD</div>
+          <div class="row-action">⋯</div>
+        </div>
+      </section>
+
+      <!-- This week -->
+      <section class="sect">
+        <div class="sect-head">
+          <h2>This week <span class="em">— ahead</span></h2>
+          <span class="count">3</span>
+          <span class="add">+ Add task</span>
+        </div>
+        <div class="row">
+          <div class="check"></div>
+          <div class="row-title"><span class="text">Reading response — Foucault</span><span class="pill phil"><span class="dot"></span>PHIL 240</span></div>
+          <div class="due">Wed</div>
+          <div class="row-action">⋯</div>
+        </div>
+        <div class="row">
+          <div class="check"></div>
+          <div class="row-title"><span class="text">Group meeting prep</span><span class="pill cs"><span class="dot"></span>CS 232</span></div>
+          <div class="due">Fri</div>
+          <div class="row-action">⋯</div>
+        </div>
+        <div class="row">
+          <div class="check"></div>
+          <div class="row-title"><span class="text">Outline for term paper</span><span class="pill eng"><span class="dot"></span>ENG 102</span></div>
+          <div class="due">Mon</div>
+          <div class="row-action">⋯</div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Right rail -->
+    <aside class="rail">
+
+      <div class="rail-section">
+        <div class="label">Today's goal</div>
+        <div class="goal">
+          <div class="goal-row">
+            <div class="donut">
+              <svg viewBox="0 0 100 100">
+                <defs>
+                  <linearGradient id="goalGrad" x1="0" x2="1" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#6db58c"/>
+                    <stop offset="100%" stop-color="#a98ed4"/>
+                  </linearGradient>
+                </defs>
+                <circle class="t" cx="50" cy="50" r="42"/>
+                <circle class="p" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="172"/>
+              </svg>
+              <div class="cap">35%</div>
+            </div>
+            <div class="goal-info">
+              <div class="h">52<span class="unit"> of 150 min</span></div>
+              <div class="s">~98m to go · 5d streak</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rail-section">
+        <div class="label">Upcoming exams <span class="more">See all</span></div>
+        <div class="exam soon">
+          <div class="cd"><div class="n">12</div><div class="u">DAYS</div></div>
+          <div class="exam-body">
+            <div class="t">Midterm — Quantum Mechanics</div>
+            <div class="s"><span class="pill physics" style="padding:1px 6px;font-size:10px;"><span class="dot"></span>PHYS 311</span><span>· May 10 · Hewitt 204</span></div>
+          </div>
+        </div>
+        <div class="exam">
+          <div class="cd"><div class="n">26</div><div class="u">DAYS</div></div>
+          <div class="exam-body">
+            <div class="t">Final — Discrete Math</div>
+            <div class="s"><span class="pill cs" style="padding:1px 6px;font-size:10px;"><span class="dot"></span>CS 232</span><span>· May 24 · Wexler 110</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rail-section">
+        <div class="label">This week</div>
+        <div class="stats">
+          <div class="stat"><div class="n">3<span class="u">/6</span></div><div class="l">Tasks</div></div>
+          <div class="stat"><div class="n">52<span class="u">m</span></div><div class="l">Studied</div></div>
+          <div class="stat"><div class="n">5<span class="u">d</span></div><div class="l">Streak</div></div>
+        </div>
+      </div>
+
+      <div class="hint">
+        <span class="k">⌘K</span> to search · <span class="k">N</span> for new task · <span class="k">space</span> to start focus
+      </div>
+
+    </aside>
+
+  </main>
+
+</div>
+
+</body>
+</html>

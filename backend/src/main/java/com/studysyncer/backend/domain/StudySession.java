@@ -3,6 +3,8 @@ package com.studysyncer.backend.domain;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -58,6 +60,12 @@ public class StudySession {
     private Instant endedAt;
 
     private Integer durationSeconds;
+
+    private Instant lastHeartbeatAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "session_type", nullable = false)
+    private SessionType sessionType = SessionType.WORK;
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Pomodoro> pomodoros = new ArrayList<>();
