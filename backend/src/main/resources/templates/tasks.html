@@ -1,9 +1,182 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/base :: layout(content=~{::content})}">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
 <body>
-<th:block th:fragment="content">
-    <h1>Tasks</h1>
-</th:block>
+
+<div class="shell">
+
+    <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+    <main class="canvas page-tasks">
+
+        <div class="main">
+
+            <div class="topbar">
+                <div class="crumb">
+                    <b>Tasks</b>
+                    <span class="sep">·</span>
+                    <span th:text="${tasks.countActive} + ' active · ' + ${tasks.countOverdue} + ' overdue'">9 active · 2 overdue</span>
+                </div>
+                <div class="right">
+                    <button class="ai-btn" type="button" disabled title="Coming soon">
+                        <svg class="spark" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                            <path d="M8 2v4M8 10v4M2 8h4M10 8h4M4 4l2 2M10 10l2 2M12 4l-2 2M6 10l-2 2"></path>
+                        </svg>
+                        Add with AI
+                        <span class="soon">soon</span>
+                    </button>
+                    <button class="new-btn" type="button" disabled title="Coming soon">
+                        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"></path></svg>
+                        New task
+                        <span class="kbd">N</span>
+                        <span class="soon">soon</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="page-head">
+                <div class="page-eyebrow" th:text="${tasks.pageEyebrow}">Tuesday · Week 12</div>
+                <h1 class="page-title">Tasks <span class="em">— what's next.</span></h1>
+                <p class="page-sub" th:text="${tasks.pageSubtitle}">Two writeups overdue. Three things due tonight, six before Friday.</p>
+            </div>
+
+            <div class="toolbar">
+                <div class="seg">
+                    <a class="seg-btn"
+                       th:classappend="${tasks.activeFilter == 'all' ? 'active' : ''}"
+                       th:href="@{/tasks(filter='all')}">All<span class="n" th:text="${tasks.countAll}">9</span></a>
+                    <a class="seg-btn"
+                       th:classappend="${tasks.activeFilter == 'active' ? 'active' : ''}"
+                       th:href="@{/tasks(filter='active')}">Active<span class="n" th:text="${tasks.countActive}">7</span></a>
+                    <a class="seg-btn"
+                       th:classappend="${tasks.activeFilter == 'completed' ? 'active' : ''}"
+                       th:href="@{/tasks(filter='completed')}">Completed<span class="n" th:text="${tasks.countCompleted}">2</span></a>
+                    <a class="seg-btn danger"
+                       th:classappend="${tasks.activeFilter == 'overdue' ? 'active' : ''}"
+                       th:href="@{/tasks(filter='overdue')}">Overdue<span class="n" th:text="${tasks.countOverdue}">2</span></a>
+                </div>
+                <div class="right">
+                    <button class="sort-btn" type="button" disabled title="Coming soon">
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h10M5 8h6M7 12h2"></path></svg>
+                        Group by <span class="k">due date</span>
+                        <span class="soon">soon</span>
+                    </button>
+                    <button class="sort-btn" type="button" disabled title="Coming soon">
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 3v10M2 5l2-2 2 2M12 13V3M10 11l2 2 2-2"></path></svg>
+                        Sort
+                        <span class="soon">soon</span>
+                    </button>
+                </div>
+            </div>
+
+            <section th:each="g : ${tasks.groups}"
+                     th:if="${!g.tasks().isEmpty()}"
+                     th:class="'sect' + (${g.cssExtra() != null} ? ' ' + ${g.cssExtra()} : '')">
+                <div class="sect-head">
+                    <h2>
+                        <span th:text="${g.heading()}">Today</span>
+                        <span class="em" th:if="${g.headingItalic() != null}" th:text="' ' + ${g.headingItalic()}"></span>
+                    </h2>
+                    <span class="count" th:text="${g.tasks().size()}">3</span>
+                </div>
+
+                <div th:each="t : ${g.tasks()}"
+                     th:class="'row' + (${t.status.name() == 'COMPLETED'} ? ' done' : '')">
+
+                    <form th:action="@{'/tasks/' + ${t.id} + '/toggle'}" method="post" style="display:contents;">
+                        <input type="hidden" name="filter" th:value="${tasks.activeFilter}"/>
+                        <button type="submit"
+                                th:class="'check' + (${t.status.name() == 'COMPLETED'} ? ' checked' : (${g.cssExtra() == 'alert'} ? ' overdue' : ''))"
+                                aria-label="Toggle complete">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3 3 7-7"></path></svg>
+                        </button>
+                    </form>
+
+                    <div class="row-title">
+                        <span class="priority" th:if="${t.priority != null and t.priority.name() == 'HIGH'}">!</span>
+                        <span class="text">
+                            <span th:text="${t.title}">Read Ch. 4</span><th:block th:if="${t.italicSuffix != null}"> — <em th:text="${t.italicSuffix}">Equilibrium</em></th:block>
+                        </span>
+                        <span th:class="'pill ' + ${fmt.pillClass(t.course)}">
+                            <span class="dot"></span><span th:text="${t.course.code}">PHYS 211</span>
+                        </span>
+                    </div>
+
+                    <span class="est" th:if="${t.estimatedMinutes != null}">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>
+                        <span th:text="${fmt.fmtEstimate(t.estimatedMinutes)}">45m</span>
+                    </span>
+                    <span th:unless="${t.estimatedMinutes != null}" class="est-spacer"></span>
+
+                    <div th:class="'due' + (${g.cssExtra() == 'alert'} ? ' overdue' : (${fmt.isSoon(t.dueAt)} ? ' soon' : ''))"
+                         th:text="${fmt.fmtTaskDueLabel(t.dueAt, g.cssExtra() == 'alert', t.completedAt)}">9 PM</div>
+
+                    <div class="row-action">⋯</div>
+                </div>
+            </section>
+
+        </div>
+
+        <aside class="rail">
+
+            <div class="rail-section">
+                <div class="label">This week</div>
+                <div class="progress-card">
+                    <div class="h">
+                        <span th:text="${tasks.weekDoneCount}">7</span><span class="of"> of <span th:text="${tasks.weekTotalCount}">14</span> done</span>
+                    </div>
+                    <div class="s">~<span th:text="${tasks.weekRemainingHoursEstimate}">9</span>h estimated remaining</div>
+                    <div class="progress-bar">
+                        <div class="fill"
+                             th:style="'width:' + (${tasks.weekTotalCount == 0} ? 0 : ${100 * tasks.weekDoneCount / tasks.weekTotalCount}) + '%'"></div>
+                    </div>
+                    <div class="legend">
+                        <span><b th:text="${tasks.weekOverdue}">2</b>overdue</span>
+                        <span><b th:text="${tasks.weekActive}">5</b>active</span>
+                        <span><b th:text="${tasks.weekDone}">7</b>done</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rail-section" th:if="${!tasks.byCourse.isEmpty()}">
+                <div class="label">By course</div>
+                <div class="courses">
+                    <div class="course-row" th:each="cp : ${tasks.byCourse}">
+                        <span th:class="'course-pebble ' + ${cp.pebbleClass()}"></span>
+                        <span class="name" th:text="${cp.course().code}">PHYS 211</span>
+                        <span class="frac" th:text="${cp.done()} + ' / ' + ${cp.total()}">3 / 5</span>
+                        <div class="mini-bar">
+                            <div class="fill"
+                                 th:style="'width:' + ${cp.percent()} + '%; background:' + ${cp.fillGradient()}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rail-section">
+                <div class="label">Suggested</div>
+                <div class="nudge">
+                    <div class="l1">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg>
+                        AI suggestion
+                    </div>
+                    <p class="body" th:text="${tasks.aiSuggestion}">Tackle Lab 2 writeup first — it's overdue and will only take ~45 min.</p>
+                    <div class="actions">
+                        <button class="nbtn solid" type="button" disabled title="Coming soon">Start now<span class="soon">soon</span></button>
+                        <button class="nbtn" type="button" disabled title="Coming soon">Reschedule<span class="soon">soon</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hint-foot">
+                <span class="k">↵</span> add task · <span class="k">⌘↵</span> complete · <span class="k">/</span> filter
+            </div>
+
+        </aside>
+
+    </main>
+
+</div>
+
 </body>
 </html>

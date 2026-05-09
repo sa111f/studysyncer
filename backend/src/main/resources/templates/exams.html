@@ -1,9 +1,254 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/base :: layout(content=~{::content})}">
-<body>
-<th:block th:fragment="content">
-    <h1>Exams</h1>
-</th:block>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body class="page-exams">
+
+<div class="shell">
+
+    <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+    <main class="canvas">
+
+        <div class="main">
+
+            <svg width="0" height="0" style="position:absolute;">
+                <defs>
+                    <linearGradient id="readyGrad" x1="0" x2="1" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#ff8d6b"/>
+                        <stop offset="100%" stop-color="#a98ed4"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+
+            <div class="topbar">
+                <div class="crumb">
+                    <b>Exams</b>
+                    <span class="sep">·</span>
+                    <span th:if="${exams.hero != null}"
+                          th:text="${exams.countUpcoming} + ' upcoming · next in ' + ${exams.hero.daysUntil} + ' days'">5 upcoming · next in 12 days</span>
+                    <span th:unless="${exams.hero != null}"
+                          th:text="${exams.countUpcoming} + ' upcoming'">0 upcoming</span>
+                </div>
+                <div class="right">
+                    <button class="ai-btn" type="button" disabled title="Coming soon">
+                        <svg class="spark" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                            <path d="M8 2v4M8 10v4M2 8h4M10 8h4M4 4l2 2M10 10l2 2M12 4l-2 2M6 10l-2 2"></path>
+                        </svg>
+                        Add with AI
+                        <span class="soon">soon</span>
+                    </button>
+                    <button class="new-btn" type="button" disabled title="Coming soon">
+                        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"></path></svg>
+                        Add exam
+                        <span class="kbd">N</span>
+                        <span class="soon">soon</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="page-head">
+                <div class="page-eyebrow" th:text="${exams.pageEyebrow}">Tuesday · Week 12</div>
+                <h1 class="page-title">Exams <span class="em">— what's coming.</span></h1>
+                <p class="page-sub" th:text="${exams.pageSubtitle}">Five exams on the horizon.</p>
+            </div>
+
+            <div class="toolbar">
+                <div class="seg">
+                    <a class="seg-btn"
+                       th:classappend="${exams.activeFilter == 'upcoming' ? 'active' : ''}"
+                       th:href="@{/exams(filter='upcoming')}">Upcoming<span class="n" th:text="${exams.countUpcoming}">5</span></a>
+                    <a class="seg-btn"
+                       th:classappend="${exams.activeFilter == 'past' ? 'active' : ''}"
+                       th:href="@{/exams(filter='past')}">Past<span class="n" th:text="${exams.countPast}">3</span></a>
+                    <a class="seg-btn"
+                       th:classappend="${exams.activeFilter == 'all' ? 'active' : ''}"
+                       th:href="@{/exams(filter='all')}">All<span class="n" th:text="${exams.countAll}">8</span></a>
+                </div>
+                <div class="right">
+                    <button class="view-btn active" type="button" disabled title="Coming soon">
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h10M3 8h10M3 12h10"></path></svg>
+                        List
+                        <span class="soon">soon</span>
+                    </button>
+                    <button class="view-btn" type="button" disabled title="Coming soon">
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="12" height="11" rx="1.5"></rect><path d="M2 6.5h12M5 1.5v3M11 1.5v3"></path></svg>
+                        Calendar
+                        <span class="soon">soon</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="hero" th:if="${exams.hero != null}">
+                <div class="hero-cd">
+                    <div class="n" th:text="${exams.hero.daysUntil}">12</div>
+                    <div class="u">DAYS AWAY</div>
+                </div>
+                <div class="hero-info">
+                    <div class="l1"><span class="blip"></span>Soonest · <span th:text="${exams.hero.typeLabel}">midterm</span></div>
+                    <h2>
+                        <span th:text="${exams.hero.heroTitle}">Quantum Mechanics</span>
+                        <span class="em" th:text="' ' + ${exams.hero.heroTypeItalic} + '.'"> — midterm.</span>
+                    </h2>
+                    <div class="meta">
+                        <span th:class="'pill ' + ${exams.hero.pillClass}">
+                            <span class="dot"></span><span th:text="${exams.hero.exam.course.code}">PHYS 311</span>
+                        </span>
+                        <span class="dot">·</span>
+                        <span th:text="${exams.hero.dateLine}">Fri May 10 · 2:00 PM · Hewitt 204</span>
+                    </div>
+                </div>
+                <div class="hero-ready">
+                    <div class="ready-ring">
+                        <svg viewBox="0 0 100 100">
+                            <circle class="t" cx="50" cy="50" r="42"/>
+                            <circle class="p" cx="50" cy="50" r="42" stroke-dasharray="264"
+                                    th:attr="stroke-dashoffset=${exams.hero.dashOffset}"/>
+                        </svg>
+                        <div class="cap"><span th:text="${exams.hero.readinessPercent}">42</span><span class="pct">%</span></div>
+                    </div>
+                    <div class="l">READY</div>
+                </div>
+                <div class="hero-actions">
+                    <button class="hero-btn primary" type="button" disabled title="Coming soon">Start study session<span class="soon">soon</span></button>
+                    <button class="hero-btn ghost" type="button" disabled title="Coming soon">Open study plan<span class="soon">soon</span></button>
+                    <button class="hero-btn ghost" type="button" disabled title="Coming soon">Add topic<span class="soon">soon</span></button>
+                </div>
+            </div>
+
+            <section class="sect" th:if="${!exams.upcomingCards.isEmpty()}">
+                <div class="sect-head">
+                    <h2>Upcoming <span class="em">— in order</span></h2>
+                    <span class="count" th:text="${exams.upcomingCards.size()}">4</span>
+                </div>
+                <div class="exams-grid">
+                    <div th:each="ec : ${exams.upcomingCards}"
+                         th:class="'exam-card ' + ${ec.courseClass()}">
+                        <div class="ec-cd">
+                            <div class="n" th:text="${ec.daysUntil()}">26</div>
+                            <div class="u">DAYS</div>
+                        </div>
+                        <div class="ec-body">
+                            <div class="h">
+                                <span class="t">
+                                    <span th:text="${ec.title()}">Discrete Mathematics</span>
+                                    <em th:text="' ' + ${ec.typeItalic()}"> — final</em>
+                                </span>
+                                <span th:class="'pill ' + ${ec.pillClass()}">
+                                    <span class="dot"></span><span th:text="${ec.exam().course.code}">CS 232</span>
+                                </span>
+                            </div>
+                            <div class="meta">
+                                <th:block th:each="part,iter : ${ec.metaParts()}">
+                                    <span th:text="${part}">Fri May 24</span>
+                                    <span class="sep" th:unless="${iter.last}">·</span>
+                                </th:block>
+                            </div>
+                            <div class="topics" th:if="${!ec.topics().isEmpty()}">
+                                <span th:each="tc : ${ec.topics()}"
+                                      th:class="'topic' + (${tc.statusClass() != ''} ? ' ' + ${tc.statusClass()} : '')"
+                                      th:text="${tc.name()}">Logic & proofs</span>
+                            </div>
+                        </div>
+                        <div class="ec-prep">
+                            <div class="ring">
+                                <svg viewBox="0 0 100 100">
+                                    <circle class="t" cx="50" cy="50" r="42"/>
+                                    <circle class="p" cx="50" cy="50" r="42" stroke-dasharray="264"
+                                            th:attr="stroke-dashoffset=${ec.dashOffset()}"/>
+                                </svg>
+                                <div class="cap"><span th:text="${ec.readinessPercent()}">70</span><span class="pct">%</span></div>
+                            </div>
+                            <div class="lab">READY</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="sect" th:if="${!exams.past.isEmpty()}">
+                <div class="sect-head">
+                    <h2>Recently past <span class="em">— for the record</span></h2>
+                    <span class="count" th:text="${exams.past.size()}">3</span>
+                </div>
+                <div class="past-row" th:each="pe : ${exams.past}">
+                    <span class="date" th:text="${pe.dateLabel()}">Apr 24</span>
+                    <span class="ttl">
+                        <span th:text="${pe.titleHead()}">Quiz 4</span>
+                        <em th:text="' — ' + ${pe.titleEm()}"> — Lagrangian mechanics</em>
+                    </span>
+                    <span th:class="'pill ' + ${pe.pillClass()}">
+                        <span class="dot"></span><span th:text="${pe.exam().course.code}">PHYS 311</span>
+                    </span>
+                    <span th:class="'grade ' + ${pe.gradeClass()}" th:text="${pe.exam().grade}">A−</span>
+                </div>
+            </section>
+
+        </div>
+
+        <aside class="rail">
+
+            <div class="rail-section">
+                <div class="label">
+                    <span th:text="${exams.calendar.monthLabelShort + ' ' + exams.calendar.year}">May 2026</span>
+                    <span class="more">View all</span>
+                </div>
+                <div class="cal">
+                    <div class="cal-head">
+                        <div class="m" th:text="${exams.calendar.monthLabelShort}">May</div>
+                        <div class="nav">
+                            <button type="button" disabled title="Coming soon">‹</button>
+                            <button type="button" disabled title="Coming soon">›</button>
+                        </div>
+                    </div>
+                    <div class="cal-grid">
+                        <div class="d">S</div><div class="d">M</div><div class="d">T</div><div class="d">W</div><div class="d">T</div><div class="d">F</div><div class="d">S</div>
+                        <div th:each="d : ${exams.calendar.days}"
+                             th:class="'day' + (${d.inMonth()} ? '' : ' muted') + (${d.isToday()} ? ' today' : '') + (${d.examMarkerClass()} != '' ? ' ' + ${d.examMarkerClass()} : '')"
+                             th:text="${d.dayNum()}">1</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rail-section">
+                <div class="label">Next session</div>
+                <div class="suggest">
+                    <div class="l1">
+                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 2l1.5 4.5L14 8l-4.5 1.5L8 14l-1.5-4.5L2 8l4.5-1.5z"></path></svg>
+                        AI suggestion
+                    </div>
+                    <p class="body" th:text="${exams.aiSuggestion}">Spend tonight on Quantum…</p>
+                    <div class="actions">
+                        <button class="nbtn solid" type="button" disabled title="Coming soon">Start 50 min<span class="soon">soon</span></button>
+                        <button class="nbtn" type="button" disabled title="Coming soon">Other topic<span class="soon">soon</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rail-section" th:if="${!exams.timeInvested.isEmpty()}">
+                <div class="label">Time invested <span class="more">This week</span></div>
+                <div class="invest">
+                    <div class="invest-row" th:each="ti : ${exams.timeInvested}">
+                        <span class="course-pebble"
+                              th:classappend="${ti.pebbleClass()}"
+                              style="width:10px;height:10px;border-radius:3px;display:inline-block;"></span>
+                        <span class="name" th:text="${ti.course().code}">PHYS 311</span>
+                        <span class="amount" th:text="${ti.hoursLabel()}">3h 20m</span>
+                        <div class="bar">
+                            <div class="fill"
+                                 th:style="'width:' + ${ti.percent()} + '%; background:' + ${ti.fillGradient()}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hint-foot">
+                <span class="k">N</span> add exam · <span class="k">space</span> start session
+            </div>
+
+        </aside>
+
+    </main>
+
+</div>
+
 </body>
 </html>

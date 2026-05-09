@@ -16,4 +16,6 @@ public interface StudySessionRepository extends JpaRepository<StudySession, Long
 
     @EntityGraph(attributePaths = "course")
     Optional<StudySession> findFirstByUserAndEndedAtIsNullOrderByStartedAtDesc(User user);
+
+    void deleteByUser(User user);
 }

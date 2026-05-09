@@ -79,7 +79,7 @@
                         <span class="text">
                             <span th:text="${t.title}">Lab 2 writeup</span><th:block th:if="${t.italicSuffix != null}"> — <em th:text="${t.italicSuffix}">…</em></th:block>
                         </span>
-                        <span th:class="'pill ' + ${#strings.toLowerCase(t.course.colorKey.name())}">
+                        <span th:class="'pill ' + ${fmt.pillClass(t.course)}">
                             <span class="dot"></span><span th:text="${t.course.code}">PHYS 211</span>
                         </span>
                     </div>
@@ -101,7 +101,7 @@
                         <span class="text">
                             <span th:text="${t.title}">Read Ch. 4</span><th:block th:if="${t.italicSuffix != null}"> — <em th:text="${t.italicSuffix}">Equilibrium</em></th:block>
                         </span>
-                        <span th:class="'pill ' + ${#strings.toLowerCase(t.course.colorKey.name())}">
+                        <span th:class="'pill ' + ${fmt.pillClass(t.course)}">
                             <span class="dot"></span><span th:text="${t.course.code}">PHYS 211</span>
                         </span>
                     </div>
@@ -123,7 +123,7 @@
                         <span class="text">
                             <span th:text="${t.title}">Reading response</span><th:block th:if="${t.italicSuffix != null}"> — <em th:text="${t.italicSuffix}">Foucault</em></th:block>
                         </span>
-                        <span th:class="'pill ' + ${#strings.toLowerCase(t.course.colorKey.name())}">
+                        <span th:class="'pill ' + ${fmt.pillClass(t.course)}">
                             <span class="dot"></span><span th:text="${t.course.code}">PHIL 240</span>
                         </span>
                     </div>
@@ -184,7 +184,7 @@
                     <div class="exam-body">
                         <div class="t" th:text="${ex.title}">Midterm — Quantum Mechanics</div>
                         <div class="s">
-                            <span th:class="'pill ' + ${#strings.toLowerCase(ex.course.colorKey.name())}"
+                            <span th:class="'pill ' + ${fmt.pillClass(ex.course)}"
                                   style="padding:1px 6px;font-size:10px;">
                                 <span class="dot"></span><span th:text="${ex.course.code}">PHYS 311</span>
                             </span>

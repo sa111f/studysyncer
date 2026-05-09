@@ -1,5 +1,8 @@
 package com.studysyncer.backend.web.view;
 
+import com.studysyncer.backend.domain.ColorKey;
+import com.studysyncer.backend.domain.ColorVariant;
+import com.studysyncer.backend.domain.Course;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -16,6 +19,7 @@ public class Formatters {
 
     private static final ZoneId TZ = ZoneId.systemDefault();
     private static final DateTimeFormatter HOUR_AM_PM = DateTimeFormatter.ofPattern("h a", Locale.ENGLISH);
+    private static final DateTimeFormatter HOUR_MIN_AM_PM = DateTimeFormatter.ofPattern("h:mm a", Locale.ENGLISH);
     private static final DateTimeFormatter WEEKDAY = DateTimeFormatter.ofPattern("EEE", Locale.ENGLISH);
     private static final DateTimeFormatter MONTH_DAY = DateTimeFormatter.ofPattern("MMM d", Locale.ENGLISH);
 
@@ -87,5 +91,96 @@ public class Formatters {
     public int dailyGoalDashOffset(int percent) {
         int p = Math.max(0, Math.min(100, percent));
         return 264 - (264 * p / 100);
+    }
+
+    public String fmtEstimate(Integer minutes) {
+        if (minutes == null || minutes <= 0) {
+            return "";
+        }
+        if (minutes < 60) {
+            return minutes + "m";
+        }
+        int h = minutes / 60;
+        int m = minutes % 60;
+        if (m == 0) {
+            return h + "h";
+        }
+        return h + "h " + m + "m";
+    }
+
+    public String fmtTaskDueLabel(Instant dueAt, boolean overdue, Instant completedAt) {
+        if (completedAt != null) {
+            return HOUR_MIN_AM_PM.format(completedAt.atZone(TZ));
+        }
+        if (dueAt == null) {
+            return "";
+        }
+        if (overdue) {
+            return fmtOverdue(dueAt);
+        }
+        LocalDate today = LocalDate.now(TZ);
+        LocalDate due = dueAt.atZone(TZ).toLocalDate();
+        if (due.isEqual(today)) {
+            return fmtToday(dueAt);
+        }
+        long days = ChronoUnit.DAYS.between(today, due);
+        if (days >= 0 && days <= 6) {
+            return fmtWeekday(dueAt);
+        }
+        return fmtMonthDay(dueAt);
+    }
+
+    public String pillClass(Course course) {
+        if (course == null || course.getColorKey() == null) {
+            return "";
+        }
+        ColorKey key = course.getColorKey();
+        ColorVariant variant = course.getColorVariant();
+        if (key == ColorKey.PHYSICS && variant == ColorVariant.DEEP) {
+            return "physics2";
+        }
+        return switch (key) {
+            case PHYSICS -> "physics";
+            case CS      -> "cs";
+            case ENG     -> "eng";
+            case PHIL    -> "phil";
+            default      -> "";
+        };
+    }
+
+    public String pebbleClass(Course course) {
+        if (course == null || course.getColorKey() == null) {
+            return "";
+        }
+        ColorKey key = course.getColorKey();
+        ColorVariant variant = course.getColorVariant();
+        if (key == ColorKey.PHYSICS && variant == ColorVariant.DEEP) {
+            return "pebble-phys2";
+        }
+        return switch (key) {
+            case PHYSICS -> "pebble-phys";
+            case CS      -> "pebble-cs";
+            case ENG     -> "pebble-eng";
+            case PHIL    -> "pebble-phil";
+            default      -> "";
+        };
+    }
+
+    public String fillGradient(Course course) {
+        if (course == null || course.getColorKey() == null) {
+            return "linear-gradient(90deg, var(--ink-faint), var(--ink-3))";
+        }
+        ColorKey key = course.getColorKey();
+        ColorVariant variant = course.getColorVariant();
+        if (key == ColorKey.PHYSICS && variant == ColorVariant.DEEP) {
+            return "linear-gradient(90deg, #c46442, #e89070)";
+        }
+        return switch (key) {
+            case PHYSICS -> "linear-gradient(90deg, var(--phys-a), var(--phys-b))";
+            case CS      -> "linear-gradient(90deg, var(--cs-a), var(--cs-b))";
+            case ENG     -> "linear-gradient(90deg, var(--eng-a), var(--eng-b))";
+            case PHIL    -> "linear-gradient(90deg, var(--phil-a), var(--phil-b))";
+            default      -> "linear-gradient(90deg, var(--ink-faint), var(--ink-3))";
+        };
     }
 }

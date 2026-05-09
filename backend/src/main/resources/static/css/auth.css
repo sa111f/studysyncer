@@ -297,21 +297,9 @@
   border-color: var(--ink-faint);
 }
 .oauth button:disabled { cursor: not-allowed; opacity: 0.78; }
+.oauth button { position: relative; }
 .oauth svg { width: 16px; height: 16px; }
-
-.soon {
-  position: absolute;
-  bottom: 4px;
-  right: 6px;
-  font-size: 9px;
-  font-family: var(--mono);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ink-3);
-  background: rgba(0, 0, 0, 0.04);
-  padding: 1px 5px;
-  border-radius: 3px;
-}
+/* .soon badge lives in studysyncer.css — shared across auth, topbar, nudge buttons */
 
 .divider {
   display: flex;
