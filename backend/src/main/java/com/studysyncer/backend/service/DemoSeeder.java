@@ -8,6 +8,8 @@ import com.studysyncer.backend.domain.ExamStatus;
 import com.studysyncer.backend.domain.ExamTopic;
 import com.studysyncer.backend.domain.ExamType;
 import com.studysyncer.backend.domain.Priority;
+import com.studysyncer.backend.domain.ScheduleItem;
+import com.studysyncer.backend.domain.ScheduleItemType;
 import com.studysyncer.backend.domain.StudySession;
 import com.studysyncer.backend.domain.Tag;
 import com.studysyncer.backend.domain.Task;
@@ -17,6 +19,7 @@ import com.studysyncer.backend.domain.User;
 import com.studysyncer.backend.repository.CourseRepository;
 import com.studysyncer.backend.repository.ExamRepository;
 import com.studysyncer.backend.repository.ExamTopicRepository;
+import com.studysyncer.backend.repository.ScheduleItemRepository;
 import com.studysyncer.backend.repository.StudySessionRepository;
 import com.studysyncer.backend.repository.TagRepository;
 import com.studysyncer.backend.repository.TaskRepository;
@@ -40,28 +43,34 @@ public class DemoSeeder {
     private final ExamRepository examRepository;
     private final ExamTopicRepository examTopicRepository;
     private final StudySessionRepository studySessionRepository;
+    private final ScheduleItemRepository scheduleItemRepository;
 
     public DemoSeeder(CourseRepository courseRepository,
                       TagRepository tagRepository,
                       TaskRepository taskRepository,
                       ExamRepository examRepository,
                       ExamTopicRepository examTopicRepository,
-                      StudySessionRepository studySessionRepository) {
+                      StudySessionRepository studySessionRepository,
+                      ScheduleItemRepository scheduleItemRepository) {
         this.courseRepository = courseRepository;
         this.tagRepository = tagRepository;
         this.taskRepository = taskRepository;
         this.examRepository = examRepository;
         this.examTopicRepository = examTopicRepository;
         this.studySessionRepository = studySessionRepository;
+        this.scheduleItemRepository = scheduleItemRepository;
     }
 
     @Transactional
     public void wipeAndReseed(User user) {
-        // FK-safe order: tasks → tags → study_sessions → exams → courses
+        // FK-safe order: tasks → tags → study_sessions → exams → schedule_items → courses
         taskRepository.deleteByUser(user);
         tagRepository.deleteByUser(user);
         studySessionRepository.deleteByUser(user);
         examRepository.deleteByUser(user);
+        for (Course c : courseRepository.findByUserOrderByDisplayOrderAsc(user)) {
+            scheduleItemRepository.deleteByCourse(c);
+        }
         courseRepository.deleteByUser(user);
         seedIfEmpty(user);
     }
@@ -78,11 +87,47 @@ public class DemoSeeder {
         Instant nowInstant = now.toInstant();
 
         Map<String, Course> courses = new HashMap<>();
-        courses.put("PHYS 211", saveCourse(user, "PHYS 211", "Classical Mechanics", ColorKey.PHYSICS, ColorVariant.DEFAULT, 0));
-        courses.put("PHYS 311", saveCourse(user, "PHYS 311", "Quantum Mechanics", ColorKey.PHYSICS, ColorVariant.DEEP, 1));
-        courses.put("CS 232",   saveCourse(user, "CS 232",   "Discrete Mathematics", ColorKey.CS,      ColorVariant.DEFAULT, 2));
-        courses.put("ENG 102",  saveCourse(user, "ENG 102",  "Composition",          ColorKey.ENG,     ColorVariant.DEFAULT, 3));
-        courses.put("PHIL 240", saveCourse(user, "PHIL 240", "Modern Philosophy",    ColorKey.PHIL,    ColorVariant.DEFAULT, 4));
+        Course phys211 = richCourse(user, "PHYS 211", "Classical Mechanics", ColorKey.PHYSICS, ColorVariant.DEFAULT, 0,
+                "Section 02", "Spring 2026", "Prof. Marian Hewitt", "Hewitt Hall 204", 4,
+                "Newtonian mechanics, energy & momentum, oscillations, and an introduction to rotational dynamics. Three lectures, one lab per week.");
+        Course phys311 = richCourse(user, "PHYS 311", "Quantum Mechanics", ColorKey.PHYSICS, ColorVariant.DEEP, 1,
+                "Section 01", "Spring 2026", "Prof. Daniel Wexler", "Hewitt Hall 204", 4,
+                "Wave functions, the Schrödinger equation, operators, perturbation theory, and an introduction to spin.");
+        Course cs232 = richCourse(user, "CS 232", "Discrete Mathematics", ColorKey.CS, ColorVariant.DEFAULT, 2,
+                "Section 03", "Spring 2026", "Prof. Lina Okafor", "Wexler 110", 3,
+                "Logic, proofs, sets, relations, graph theory, recursion, and combinatorial counting.");
+        Course eng102 = richCourse(user, "ENG 102", "Composition", ColorKey.ENG, ColorVariant.DEFAULT, 3,
+                "Section 11", "Spring 2026", "Dr. Aisha Tanaka", "Library Hall B12", 3,
+                "Argumentative writing, research methods, and rhetorical analysis. Weekly drafts and peer review.");
+        Course phil240 = richCourse(user, "PHIL 240", "Modern Philosophy", ColorKey.PHIL, ColorVariant.DEFAULT, 4,
+                "Section 04", "Spring 2026", "Prof. Henri Solas", "Library Hall A2", 3,
+                "From Descartes to Foucault: epistemology, power, the subject, and continental thought.");
+        courses.put("PHYS 211", phys211);
+        courses.put("PHYS 311", phys311);
+        courses.put("CS 232",   cs232);
+        courses.put("ENG 102",  eng102);
+        courses.put("PHIL 240", phil240);
+
+        // Schedule items per course
+        // PHYS 211 — MWF 10:00 lectures + Tue 2 PM lab
+        sched(phys211, ScheduleItemType.LECTURE,  "Lecture",         "Hewitt Hall 204", 1, 10, 0, 50,  0);
+        sched(phys211, ScheduleItemType.LAB,      "Lab — pendulum",  "Lab Annex 3",     2, 14, 0, 120, 1);
+        sched(phys211, ScheduleItemType.LECTURE,  "Lecture",         "Hewitt Hall 204", 3, 10, 0, 50,  2);
+        sched(phys211, ScheduleItemType.LECTURE,  "Lecture — quiz",  "Hewitt Hall 204", 5, 10, 0, 80,  3);
+        // PHYS 311 — TTh 1:00 PM
+        sched(phys311, ScheduleItemType.LECTURE,  "Lecture",         "Hewitt Hall 204", 2, 13, 0, 75,  0);
+        sched(phys311, ScheduleItemType.LECTURE,  "Lecture",         "Hewitt Hall 204", 4, 13, 0, 75,  1);
+        // CS 232 — MWF 9:00 + Thu tutorial 4 PM
+        sched(cs232,   ScheduleItemType.LECTURE,  "Lecture",         "Wexler 110",      1,  9, 0, 50,  0);
+        sched(cs232,   ScheduleItemType.LECTURE,  "Lecture",         "Wexler 110",      3,  9, 0, 50,  1);
+        sched(cs232,   ScheduleItemType.LECTURE,  "Lecture",         "Wexler 110",      5,  9, 0, 50,  2);
+        sched(cs232,   ScheduleItemType.TUTORIAL, "Tutorial",        "Wexler 105",      4, 16, 0, 60,  3);
+        // ENG 102 — TTh 11:00
+        sched(eng102,  ScheduleItemType.LECTURE,  "Workshop",        "Library Hall B12", 2, 11, 0, 80, 0);
+        sched(eng102,  ScheduleItemType.LECTURE,  "Workshop",        "Library Hall B12", 4, 11, 0, 80, 1);
+        // PHIL 240 — MW 3:00
+        sched(phil240, ScheduleItemType.LECTURE,  "Seminar",         "Library Hall A2", 1, 15, 0, 90, 0);
+        sched(phil240, ScheduleItemType.LECTURE,  "Seminar",         "Library Hall A2", 3, 15, 0, 90, 1);
 
         for (String name : List.of("midterm", "writeup", "reading", "lab")) {
             Tag tag = new Tag();
@@ -211,12 +256,6 @@ public class DemoSeeder {
         // Study sessions — full Sun..today coverage of current week (Sunday-first grid).
         // Tracker page bar chart needs at least one session per past weekday; this also drives
         // the streak, daily/week totals, recent-session list, and peak-hour insight.
-        Course phys211 = courses.get("PHYS 211");
-        Course phys311 = courses.get("PHYS 311");
-        Course cs232   = courses.get("CS 232");
-        Course eng102  = courses.get("ENG 102");
-        Course phil240 = courses.get("PHIL 240");
-
         // Sunday at or before today (Sun=last day of ISO week → 0 days back when today is Sun).
         int dow = now.getDayOfWeek().getValue(); // Mon=1..Sun=7
         int daysBackToSunday = (dow == 7) ? 0 : dow;
@@ -274,7 +313,9 @@ public class DemoSeeder {
         }
     }
 
-    private Course saveCourse(User user, String code, String name, ColorKey ck, ColorVariant cv, int order) {
+    private Course richCourse(User user, String code, String name, ColorKey ck, ColorVariant cv, int order,
+                              String section, String term, String professor, String room,
+                              int credits, String description) {
         Course c = new Course();
         c.setUser(user);
         c.setCode(code);
@@ -282,7 +323,27 @@ public class DemoSeeder {
         c.setColorKey(ck);
         c.setColorVariant(cv);
         c.setDisplayOrder(order);
+        c.setSection(section);
+        c.setTerm(term);
+        c.setProfessor(professor);
+        c.setRoom(room);
+        c.setCredits(credits);
+        c.setDescription(description);
         return courseRepository.save(c);
+    }
+
+    private ScheduleItem sched(Course course, ScheduleItemType type, String title, String location,
+                               int dayOfWeek, int startHour, int startMinute, int durationMinutes, int order) {
+        ScheduleItem s = new ScheduleItem();
+        s.setCourse(course);
+        s.setItemType(type);
+        s.setTitle(title);
+        s.setLocation(location);
+        s.setDayOfWeek((short) dayOfWeek);
+        s.setStartMinute(startHour * 60 + startMinute);
+        s.setDurationMinutes(durationMinutes);
+        s.setDisplayOrder(order);
+        return scheduleItemRepository.save(s);
     }
 
     private void saveTask(User user, Course course, String title, String italic, Instant dueAt,

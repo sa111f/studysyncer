@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>StudySyncer — PHYS 211</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,500&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f0e6;--bg-2:#ede6d5;--surface:#fbf7ec;--surface-2:#ffffff;--hover:#efe9da;
+    --ink:#2a221a;--ink-2:#4a3f30;--ink-3:#8a7c66;--ink-faint:#c4b89e;
+    --rule:rgba(60,45,25,0.12);--rule-soft:rgba(60,45,25,0.06);
+    --phys-a:#ff8d6b;--phys-b:#ffb8a0;--phys-ink:#7a2e15;
+    --cs-a:#6db58c;--cs-b:#a9d9ba;--cs-ink:#1f4a30;
+    --eng-a:#e9b75a;--eng-b:#f4d28e;--eng-ink:#6a4810;
+    --phil-a:#a98ed4;--phil-b:#cfbce8;--phil-ink:#422968;
+
+    /* This page's space color = physics */
+    --space-a:var(--phys-a);--space-b:var(--phys-b);--space-ink:var(--phys-ink);
+    --space-tint:rgba(255,141,107,0.16);
+    --space-tint-2:rgba(255,141,107,0.30);
+
+    --serif:'Newsreader','Iowan Old Style',Georgia,serif;
+    --sans:'Inter',-apple-system,system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *,*::before,*::after{box-sizing:border-box;}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+  button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0;}
+
+  .shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh;padding:10px;gap:10px;
+    background:radial-gradient(1100px 600px at 0% 0%,rgba(255,141,107,0.18),transparent 60%),
+      radial-gradient(900px 500px at 100% 100%,rgba(169,142,212,0.15),transparent 65%),var(--bg);}
+
+  /* Sidebar — tinted by current space */
+  .sidebar{background:linear-gradient(170deg,var(--space-a) 0%,var(--space-b) 60%,transparent 110%),var(--bg-2);border-radius:16px;padding:16px 12px;display:flex;flex-direction:column;gap:4px;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.4),0 1px 2px rgba(60,45,25,0.04);color:var(--space-ink);}
+  .ws{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:8px;cursor:pointer;}
+  .ws:hover{background:rgba(255,255,255,0.4);}
+  .ws-icon{width:26px;height:26px;border-radius:8px;background:rgba(255,255,255,0.65);color:var(--space-ink);display:grid;place-items:center;font-family:var(--serif);font-weight:600;font-size:14px;}
+  .ws-name{flex:1;font-size:13.5px;font-weight:600;letter-spacing:-0.01em;color:var(--ink);}
+  .ws-chev{color:var(--ink-3);font-size:11px;opacity:0.7;}
+  .cmd{display:flex;align-items:center;gap:8px;padding:7px 11px;border-radius:10px;background:rgba(255,255,255,0.55);border:1px solid rgba(255,255,255,0.7);color:var(--ink-2);font-size:12.5px;margin-bottom:14px;cursor:text;}
+  .cmd .ic{width:13px;height:13px;opacity:0.7;}
+  .cmd .placeholder{flex:1;color:var(--ink-3);}
+  .cmd .kbd{font-family:var(--mono);font-size:10px;padding:1px 6px;background:rgba(255,255,255,0.7);border-radius:4px;color:var(--ink-2);border:1px solid var(--rule-soft);}
+  .nav-label{font-size:10.5px;color:var(--ink-3);padding:12px 12px 4px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;}
+  .pinned{display:flex;flex-direction:column;gap:1px;}
+  .pin{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:8px;font-size:13px;color:var(--ink-2);cursor:pointer;}
+  .pin:hover{background:rgba(255,255,255,0.45);color:var(--ink);}
+  .pin .ic{width:14px;height:14px;opacity:0.75;flex-shrink:0;}
+  .pin .badge{margin-left:auto;font-family:var(--mono);font-size:10px;background:rgba(0,0,0,0.06);color:var(--ink-2);padding:1px 7px;border-radius:999px;}
+  .spaces{display:flex;flex-direction:column;gap:2px;padding:0 2px;}
+  .space{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:8px;font-size:13px;color:var(--ink-2);cursor:pointer;}
+  .space:hover{background:rgba(255,255,255,0.45);color:var(--ink);}
+  .space.active{background:rgba(255,255,255,0.85);color:var(--ink);font-weight:600;}
+  .space-pebble{width:14px;height:14px;border-radius:5px;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,0.05);}
+  .pebble-phys{background:linear-gradient(135deg,var(--phys-a),var(--phys-b));}
+  .pebble-phys2{background:linear-gradient(135deg,#c46442,#e89070);}
+  .pebble-cs{background:linear-gradient(135deg,var(--cs-a),var(--cs-b));}
+  .pebble-eng{background:linear-gradient(135deg,var(--eng-a),var(--eng-b));}
+  .pebble-phil{background:linear-gradient(135deg,var(--phil-a),var(--phil-b));}
+  .space .count{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-3);}
+  .sidebar-foot{margin-top:auto;padding:10px 10px 4px;border-top:1px solid rgba(255,255,255,0.5);display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink-2);}
+  .avatar{width:26px;height:26px;background:linear-gradient(135deg,var(--phys-a),var(--phil-a));color:white;border-radius:50%;display:grid;place-items:center;font-family:var(--serif);font-size:13px;font-weight:600;flex-shrink:0;}
+  .sidebar-foot .name{flex:1;color:var(--ink);font-weight:500;}
+  .sidebar-foot .gear{color:var(--ink-3);width:14px;height:14px;}
+
+  /* Canvas */
+  .canvas{background:var(--surface);border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,0.6),0 12px 28px -16px rgba(60,45,25,0.18),0 1px 2px rgba(60,45,25,0.04);overflow:hidden;display:flex;flex-direction:column;}
+
+  /* Hero header for the space */
+  .space-hero{
+    position:relative;
+    padding:32px 44px 28px;
+    background:
+      radial-gradient(circle at 90% 0%,var(--space-tint-2),transparent 55%),
+      linear-gradient(135deg,var(--space-tint),rgba(169,142,212,0.06));
+    border-bottom:1px solid var(--rule-soft);
+    overflow:hidden;
+  }
+  .space-hero::before{
+    content:"";position:absolute;inset:0;
+    background-image:repeating-linear-gradient(0deg,transparent 0 23px,rgba(122,46,21,0.04) 23px 24px);
+    pointer-events:none;
+  }
+  .crumb{font-size:12.5px;color:var(--ink-3);display:flex;align-items:center;gap:8px;margin-bottom:14px;position:relative;}
+  .crumb a{color:var(--ink-2);text-decoration:none;font-weight:500;}
+  .crumb a:hover{text-decoration:underline;}
+  .crumb .sep{color:var(--ink-faint);}
+
+  .hero-row{display:flex;align-items:flex-start;gap:24px;position:relative;z-index:1;}
+  .course-mark{
+    width:88px;height:88px;border-radius:20px;
+    background:linear-gradient(135deg,var(--space-a),var(--space-b));
+    color:white;display:grid;place-items:center;
+    font-family:var(--serif);font-style:italic;font-size:42px;font-weight:500;
+    box-shadow:0 8px 22px -10px rgba(122,46,21,0.4),inset 0 0 0 1px rgba(255,255,255,0.3);
+    flex-shrink:0;
+  }
+  .hero-info{flex:1;min-width:0;}
+  .hero-info .code{font-family:var(--mono);font-size:11.5px;color:var(--space-ink);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;margin-bottom:6px;}
+  .hero-info h1{font-family:var(--serif);font-size:42px;font-weight:500;letter-spacing:-0.025em;line-height:1.05;margin:0 0 6px;color:var(--ink);}
+  .hero-info h1 .em{font-style:italic;color:var(--space-ink);font-weight:500;}
+  .hero-info .desc{font-family:var(--serif);font-size:16px;font-style:italic;color:var(--ink-2);margin:0 0 14px;max-width:540px;line-height:1.4;}
+  .hero-meta{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11.5px;color:var(--ink-2);}
+  .hero-meta span{display:flex;align-items:center;gap:6px;}
+  .hero-meta .sep{color:var(--ink-faint);}
+  .hero-meta .ic{width:12px;height:12px;color:var(--ink-3);}
+
+  .hero-actions{display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+  .btn{padding:7px 14px;border-radius:9px;font-size:12.5px;font-weight:500;display:inline-flex;align-items:center;gap:7px;white-space:nowrap;}
+  .btn.primary{background:var(--space-ink);color:white;}
+  .btn.primary:hover{background:#5e2010;}
+  .btn.ghost{background:rgba(255,255,255,0.65);color:var(--space-ink);border:1px solid rgba(255,255,255,0.7);}
+  .btn.ghost:hover{background:rgba(255,255,255,0.95);}
+  .btn .ic{width:12px;height:12px;}
+
+  /* Stat strip */
+  .stats-strip{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    border-bottom:1px solid var(--rule-soft);
+  }
+  .ss-cell{padding:18px 28px;display:flex;flex-direction:column;gap:2px;border-right:1px solid var(--rule-soft);position:relative;}
+  .ss-cell:last-child{border-right:none;}
+  .ss-cell .l{font-size:10.5px;color:var(--ink-3);letter-spacing:0.06em;text-transform:uppercase;font-weight:600;}
+  .ss-cell .v{font-family:var(--serif);font-size:28px;font-weight:500;letter-spacing:-0.025em;color:var(--ink);line-height:1.1;}
+  .ss-cell .v .u{font-size:14px;color:var(--ink-3);font-style:italic;font-weight:400;}
+  .ss-cell .v .em{font-style:italic;color:var(--space-ink);}
+  .ss-cell .s{font-size:11px;color:var(--ink-3);font-family:var(--mono);margin-top:2px;}
+  .ss-cell.ready .ring-mini{position:absolute;top:18px;right:24px;width:42px;height:42px;}
+  .ss-cell.ready .ring-mini svg{width:100%;height:100%;transform:rotate(-90deg);}
+  .ss-cell.ready .ring-mini .t{fill:none;stroke:var(--rule);stroke-width:7;}
+  .ss-cell.ready .ring-mini .p{fill:none;stroke:var(--space-ink);stroke-width:7;stroke-linecap:round;}
+
+  /* Tabs */
+  .tabs{display:flex;gap:0;padding:0 32px;border-bottom:1px solid var(--rule-soft);background:var(--surface);}
+  .tab{padding:14px 18px;font-size:13px;color:var(--ink-3);font-weight:500;display:inline-flex;align-items:center;gap:7px;position:relative;cursor:pointer;}
+  .tab:hover{color:var(--ink);}
+  .tab.active{color:var(--ink);}
+  .tab.active::after{content:"";position:absolute;bottom:-1px;left:14px;right:14px;height:2px;background:var(--space-ink);border-radius:2px 2px 0 0;}
+  .tab .n{font-family:var(--mono);font-size:10px;background:var(--bg-2);color:var(--ink-2);padding:1px 6px;border-radius:999px;font-weight:500;}
+  .tab.active .n{background:var(--space-tint);color:var(--space-ink);}
+
+  /* Body grid */
+  .body{display:grid;grid-template-columns:1fr 320px;flex:1;min-height:0;}
+  .main{padding:28px 44px 56px;min-width:0;}
+
+  .sect{margin-bottom:32px;}
+  .sect-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;padding:4px 0;}
+  .sect-head h2{margin:0;font-family:var(--serif);font-size:22px;font-weight:500;letter-spacing:-0.015em;color:var(--ink);}
+  .sect-head h2 .em{font-style:italic;color:var(--ink-3);font-weight:400;}
+  .sect-head .count{font-family:var(--mono);font-size:11px;color:var(--ink-3);}
+  .sect-head .more{margin-left:auto;font-size:12px;color:var(--ink-3);padding:4px 9px;border-radius:6px;}
+  .sect-head .more:hover{background:var(--hover);color:var(--ink);}
+
+  /* Pinned upcoming exam — same DNA as exams hero, smaller */
+  .next-exam{
+    margin-bottom:24px;border-radius:14px;
+    padding:20px 24px;
+    background:linear-gradient(135deg,var(--space-tint),rgba(169,142,212,0.06));
+    border:1px solid var(--space-tint-2);
+    display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:center;
+  }
+  .ne-cd{text-align:center;padding-right:20px;border-right:1px solid rgba(122,46,21,0.18);}
+  .ne-cd .n{font-family:var(--serif);font-size:48px;font-weight:500;letter-spacing:-0.04em;line-height:0.95;color:var(--space-ink);font-style:italic;font-variant-numeric:tabular-nums;}
+  .ne-cd .u{font-family:var(--mono);font-size:9.5px;color:var(--space-ink);opacity:0.75;letter-spacing:0.1em;margin-top:4px;}
+  .ne-info .l{font-size:10.5px;font-weight:600;color:var(--space-ink);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px;}
+  .ne-info h3{font-family:var(--serif);font-size:20px;font-weight:500;letter-spacing:-0.015em;line-height:1.15;margin:0 0 4px;color:var(--ink);}
+  .ne-info h3 .em{font-style:italic;color:var(--space-ink);font-weight:500;}
+  .ne-info .meta{display:flex;flex-wrap:wrap;gap:10px;font-family:var(--mono);font-size:11px;color:var(--ink-2);}
+  .ne-info .meta .sep{color:var(--ink-faint);}
+  .ne-cta{display:flex;flex-direction:column;gap:6px;}
+
+  /* Task row */
+  .tasks{display:flex;flex-direction:column;gap:4px;}
+  .task{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:11px 10px;border-radius:10px;margin:0 -10px;cursor:pointer;transition:background 120ms;}
+  .task:hover{background:var(--hover);}
+  .task .check{width:18px;height:18px;border-radius:6px;border:1.5px solid var(--ink-faint);background:var(--surface-2);flex-shrink:0;cursor:pointer;display:grid;place-items:center;color:transparent;font-size:11px;font-weight:600;}
+  .task .check:hover{border-color:var(--ink-2);}
+  .task.done .check{background:var(--space-ink);border-color:var(--space-ink);color:white;}
+  .task.done .t{text-decoration:line-through;color:var(--ink-3);}
+  .task .body{min-width:0;}
+  .task .t{font-size:14px;color:var(--ink);}
+  .task .t em{font-style:italic;color:var(--ink-2);}
+  .task .sub{font-size:11.5px;color:var(--ink-3);font-family:var(--mono);margin-top:1px;}
+  .task .est{font-family:var(--mono);font-size:11px;color:var(--ink-3);}
+  .task .due{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);padding:2px 9px;border-radius:6px;background:var(--bg-2);}
+  .task .due.late{background:var(--space-tint);color:var(--space-ink);font-weight:500;}
+  .task .due.today{background:rgba(31,74,48,0.12);color:var(--cs-ink);font-weight:500;}
+
+  /* Topic grid */
+  .topics{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
+  .topic{
+    background:var(--surface-2);
+    border:1px solid var(--rule-soft);
+    border-radius:12px;
+    padding:14px 16px;
+    cursor:pointer;
+    transition:all 200ms;
+    position:relative;
+    overflow:hidden;
+  }
+  .topic:hover{transform:translateY(-1px);box-shadow:0 6px 16px -10px rgba(60,45,25,0.18);border-color:var(--rule);}
+  .topic .h{font-family:var(--serif);font-size:15px;font-weight:500;letter-spacing:-0.01em;color:var(--ink);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .topic .h em{font-style:italic;color:var(--ink-2);font-weight:400;}
+  .topic .h .check{width:14px;height:14px;border-radius:4px;border:1.5px solid var(--ink-faint);background:var(--surface-2);}
+  .topic.done .h .check{background:var(--space-ink);border-color:var(--space-ink);}
+  .topic.done .h{color:var(--ink-3);}
+  .topic.done .h em{color:var(--ink-3);}
+  .topic .progress{height:4px;background:var(--rule);border-radius:999px;overflow:hidden;margin-bottom:8px;}
+  .topic .progress .fill{height:100%;background:linear-gradient(90deg,var(--space-a),var(--space-b));border-radius:999px;}
+  .topic .meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);}
+  .topic .meta .pct{color:var(--space-ink);font-weight:500;}
+  .topic.weak::before{content:"weak";position:absolute;top:10px;right:12px;font-family:var(--mono);font-size:9px;color:var(--space-ink);background:var(--space-tint);padding:1px 6px;border-radius:999px;letter-spacing:0.04em;}
+
+  /* Resources */
+  .resources{display:flex;flex-direction:column;gap:4px;}
+  .res{display:grid;grid-template-columns:auto 1fr auto auto;gap:14px;align-items:center;padding:10px 10px;border-radius:10px;margin:0 -10px;cursor:pointer;}
+  .res:hover{background:var(--hover);}
+  .res .icon-tile{
+    width:30px;height:30px;border-radius:8px;
+    background:var(--space-tint);
+    color:var(--space-ink);
+    display:grid;place-items:center;flex-shrink:0;
+  }
+  .res .icon-tile svg{width:14px;height:14px;}
+  .res .icon-tile.video{background:rgba(169,142,212,0.20);color:var(--phil-ink);}
+  .res .icon-tile.link{background:rgba(31,74,48,0.12);color:var(--cs-ink);}
+  .res .name{font-size:13.5px;color:var(--ink);}
+  .res .name em{font-style:italic;color:var(--ink-2);font-family:var(--serif);}
+  .res .sub{font-size:11px;color:var(--ink-3);font-family:var(--mono);margin-top:1px;}
+  .res .size{font-family:var(--mono);font-size:11px;color:var(--ink-3);}
+  .res .open{color:var(--ink-3);width:14px;height:14px;}
+  .res:hover .open{color:var(--ink);}
+
+  /* Right rail */
+  .rail{border-left:1px solid var(--rule-soft);background:linear-gradient(180deg,var(--surface) 0%,#f7f1e2 100%);padding:28px 24px 40px;display:flex;flex-direction:column;gap:24px;overflow-y:auto;}
+  .rail-section .label{font-size:10.5px;color:var(--ink-3);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;margin-bottom:10px;display:flex;align-items:baseline;justify-content:space-between;}
+  .rail-section .label .more{text-transform:none;letter-spacing:0;font-weight:500;font-size:11.5px;color:var(--ink-3);cursor:pointer;}
+
+  /* Time card */
+  .time-card{background:var(--surface-2);border:1px solid var(--rule-soft);border-radius:14px;padding:16px 18px;}
+  .time-row{display:flex;align-items:baseline;gap:8px;margin-bottom:14px;}
+  .time-big{font-family:var(--serif);font-size:34px;font-weight:500;letter-spacing:-0.03em;color:var(--ink);line-height:1;}
+  .time-big .u{font-size:14px;color:var(--ink-3);font-style:italic;font-weight:400;}
+  .time-big .em{font-style:italic;color:var(--space-ink);}
+  .time-sub{font-size:11.5px;color:var(--ink-3);font-family:var(--mono);}
+  /* mini week bars */
+  .mini-bars{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:end;height:48px;margin-bottom:6px;}
+  .mb{background:var(--rule);border-radius:3px;min-height:3px;position:relative;}
+  .mb.f{background:linear-gradient(180deg,var(--space-a),var(--space-b));}
+  .mb.today{outline:1.5px dashed var(--space-ink);outline-offset:1.5px;}
+  .mini-labels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9px;color:var(--ink-3);}
+
+  /* Schedule */
+  .schedule{display:flex;flex-direction:column;gap:6px;}
+  .sched{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:flex-start;padding:8px 10px;border-radius:9px;margin:0 -10px;}
+  .sched:hover{background:var(--hover);}
+  .sched .when{
+    font-family:var(--mono);font-size:10px;color:var(--ink-3);text-align:right;
+    min-width:48px;padding-top:1px;
+    line-height:1.3;
+  }
+  .sched .when b{display:block;font-family:var(--serif);font-size:13px;color:var(--ink-2);font-weight:500;}
+  .sched .what .t{font-size:13px;color:var(--ink);font-weight:500;}
+  .sched .what .l{font-size:11px;color:var(--ink-3);font-family:var(--mono);}
+  .sched.next{background:var(--space-tint);}
+  .sched.next .what .t{color:var(--space-ink);}
+
+  /* People */
+  .people{display:flex;flex-direction:column;gap:8px;}
+  .person{display:flex;align-items:center;gap:10px;padding:6px 0;}
+  .person .a{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:white;font-family:var(--serif);font-size:13px;font-weight:500;flex-shrink:0;}
+  .person .a.p1{background:linear-gradient(135deg,var(--phys-a),var(--phys-b));}
+  .person .a.p2{background:linear-gradient(135deg,var(--cs-a),var(--cs-b));}
+  .person .a.p3{background:linear-gradient(135deg,var(--phil-a),var(--phil-b));}
+  .person .a.p4{background:linear-gradient(135deg,var(--eng-a),var(--eng-b));}
+  .person .info{flex:1;}
+  .person .info .n{font-size:13px;color:var(--ink);font-weight:500;}
+  .person .info .r{font-size:11px;color:var(--ink-3);font-family:var(--mono);}
+  .person .role{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:999px;background:var(--bg-2);color:var(--ink-2);}
+  .person .role.prof{background:var(--space-tint);color:var(--space-ink);}
+
+  @media (max-width:1100px){.body{grid-template-columns:1fr;}.rail{border-left:none;border-top:1px solid var(--rule-soft);}}
+  @media (max-width:760px){.shell{grid-template-columns:1fr;padding:6px;}.sidebar{display:none;}.main{padding:24px 22px 40px;}.stats-strip{grid-template-columns:repeat(2,1fr);}.ss-cell:nth-child(2){border-right:none;}.ss-cell{border-bottom:1px solid var(--rule-soft);}.hero-row{flex-direction:column;}.hero-actions{align-items:flex-start;flex-direction:row;}.next-exam{grid-template-columns:1fr;}.ne-cd{border-right:none;border-bottom:1px solid rgba(122,46,21,0.18);padding:0 0 12px;}}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <aside class="sidebar">
+    <div class="ws"><div class="ws-icon">S</div><div class="ws-name">Saal's space</div><span class="ws-chev">⌄</span></div>
+    <div class="cmd">
+      <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"></circle><path d="M11 11l3.5 3.5"></path></svg>
+      <span class="placeholder">Search or run command</span>
+      <span class="kbd">⌘K</span>
+    </div>
+    <div class="pinned">
+      <a class="pin"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2.5 8 L8 2.5 L13.5 8 L13.5 13.5 L9.5 13.5 L9.5 9.5 L6.5 9.5 L6.5 13.5 L2.5 13.5 Z"></path></svg>Today</a>
+      <a class="pin"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4h10M3 8h10M3 12h7"></path></svg>Tasks<span class="badge">9</span></a>
+      <a class="pin"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2.5" y="3.5" width="11" height="9.5" rx="1.5"></rect><path d="M5.5 6.5h5M5.5 9h3"></path></svg>Exams<span class="badge">12d</span></a>
+      <a class="pin"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 12 L6 8 L9 11 L14 5"></path></svg>Tracker</a>
+      <a class="pin"><svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="5.5"></circle><path d="M8 5v3l2 1.5"></path></svg>Focus</a>
+    </div>
+    <div class="nav-label">Spaces</div>
+    <div class="spaces">
+      <div class="space active"><span class="space-pebble pebble-phys"></span>PHYS 211<span class="count">3</span></div>
+      <div class="space"><span class="space-pebble pebble-phys2"></span>PHYS 311<span class="count">1</span></div>
+      <div class="space"><span class="space-pebble pebble-cs"></span>CS 232<span class="count">2</span></div>
+      <div class="space"><span class="space-pebble pebble-eng"></span>ENG 102<span class="count">1</span></div>
+      <div class="space"><span class="space-pebble pebble-phil"></span>PHIL 240<span class="count">2</span></div>
+    </div>
+    <div class="sidebar-foot">
+      <div class="avatar">S</div>
+      <div class="name">Saal Maharaj</div>
+      <svg class="gear" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"></circle><path d="M8 1.5v2M8 12.5v2M14.5 8h-2M3.5 8h-2M12.6 3.4l-1.4 1.4M4.8 11.2l-1.4 1.4M12.6 12.6l-1.4-1.4M4.8 4.8L3.4 3.4"></path></svg>
+    </div>
+  </aside>
+
+  <main class="canvas">
+
+    <!-- Hero -->
+    <header class="space-hero">
+      <div class="crumb">
+        <a href="#">Spaces</a><span class="sep">›</span>
+        <span>PHYS 211</span>
+      </div>
+
+      <div class="hero-row">
+        <div class="course-mark">P</div>
+        <div class="hero-info">
+          <div class="code">PHYS 211 · Spring 2026 · Section 02</div>
+          <h1>Classical <span class="em">Mechanics.</span></h1>
+          <p class="desc">Newtonian mechanics, energy &amp; momentum, oscillations, and an introduction to rotational dynamics. Three lectures, one lab per week.</p>
+          <div class="hero-meta">
+            <span>
+              <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="6" r="2.5"/><path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5"/></svg>
+              Prof. Marian Hewitt
+            </span>
+            <span class="sep">·</span>
+            <span>
+              <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6h12M5 1.5v3M11 1.5v3"/></svg>
+              MWF 10:00 — 10:50
+            </span>
+            <span class="sep">·</span>
+            <span>
+              <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 14s5-4.5 5-9a5 5 0 1 0-10 0c0 4.5 5 9 5 9z"/><circle cx="8" cy="5" r="1.8"/></svg>
+              Hewitt Hall 204
+            </span>
+            <span class="sep">·</span>
+            <span>
+              <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 13h10M3 13l3-8h4l3 8"/></svg>
+              4 credits
+            </span>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="btn primary">
+            <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="8" r="5.5"/><path d="M8 5v3l2 1.5"/></svg>
+            Start focus session
+          </button>
+          <button class="btn ghost">
+            <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
+            Add task
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Stat strip -->
+    <div class="stats-strip">
+      <div class="ss-cell">
+        <div class="l">Open tasks</div>
+        <div class="v">3 <span class="u">of 14</span></div>
+        <div class="s">1 due today · 1 overdue</div>
+      </div>
+      <div class="ss-cell">
+        <div class="l">Time this week</div>
+        <div class="v">3<span class="u">h</span> 02<span class="u">m</span></div>
+        <div class="s">+ 22m vs last week</div>
+      </div>
+      <div class="ss-cell">
+        <div class="l">Next exam</div>
+        <div class="v"><span class="em">45</span><span class="u"> days</span></div>
+        <div class="s">Final · Wed Jun 12</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="tabs">
+      <button class="tab active">Overview</button>
+      <button class="tab">Tasks <span class="n">3</span></button>
+    </nav>
+
+    <!-- Body -->
+    <div class="body">
+
+      <div class="main">
+
+        <!-- Pinned: next exam -->
+        <div class="next-exam">
+          <div class="ne-cd"><div class="n">45</div><div class="u">DAYS</div></div>
+          <div class="ne-info">
+            <div class="l">Pinned · cumulative final</div>
+            <h3>Mechanics <span class="em">— final exam.</span></h3>
+            <div class="meta">
+              <span>Wed Jun 12</span><span class="sep">·</span>
+              <span>10:00 AM</span><span class="sep">·</span>
+              <span>Hewitt 204</span><span class="sep">·</span>
+              <span>3 hours</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Open tasks -->
+        <section class="sect">
+          <div class="sect-head">
+            <h2>Open tasks <span class="em">— from this course</span></h2>
+            <span class="count">3</span>
+            <span class="more">View all</span>
+          </div>
+          <div class="tasks">
+            <div class="task">
+              <span class="check">✓</span>
+              <div class="body">
+                <div class="t">Lab 2 writeup — <em>Pendulum</em></div>
+                <div class="sub">Lab · 5 pages · ~2h</div>
+              </div>
+              <span class="est">2h</span>
+              <span class="due late">3d late</span>
+            </div>
+            <div class="task">
+              <span class="check">✓</span>
+              <div class="body">
+                <div class="t">Problem set 6 — <em>oscillations</em></div>
+                <div class="sub">Homework · 8 problems · ~90m</div>
+              </div>
+              <span class="est">1h 30m</span>
+              <span class="due today">Today · 11 PM</span>
+            </div>
+            <div class="task">
+              <span class="check">✓</span>
+              <div class="body">
+                <div class="t">Read Ch. 14 — <em>rotational kinematics</em></div>
+                <div class="sub">Reading · 22 pages</div>
+              </div>
+              <span class="est">45m</span>
+              <span class="due">Fri</span>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- Right rail -->
+      <aside class="rail">
+
+        <div class="rail-section">
+          <div class="label">Time invested</div>
+          <div class="time-card">
+            <div class="time-row">
+              <div class="time-big">3<span class="u">h</span> 02<span class="u">m</span></div>
+              <div class="time-sub">this week</div>
+            </div>
+            <div class="mini-bars">
+              <div class="mb f" style="height:30%;"></div>
+              <div class="mb f" style="height:62%;"></div>
+              <div class="mb f today" style="height:48%;"></div>
+              <div class="mb f" style="height:88%;"></div>
+              <div class="mb f" style="height:38%;"></div>
+              <div class="mb" style="height:6%;"></div>
+              <div class="mb" style="height:6%;"></div>
+            </div>
+            <div class="mini-labels">
+              <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="rail-section">
+          <div class="label">Schedule <span class="more">This week</span></div>
+          <div class="schedule">
+            <div class="sched">
+              <div class="when"><b>Mon</b>10 AM</div>
+              <div class="what"><div class="t">Lecture 18</div><div class="l">Hewitt Hall 204</div></div>
+            </div>
+            <div class="sched next">
+              <div class="when"><b>Tue</b>2 PM</div>
+              <div class="what"><div class="t">Lab — Pendulum II</div><div class="l">Lab Annex 3 · 2 hrs</div></div>
+            </div>
+            <div class="sched">
+              <div class="when"><b>Wed</b>10 AM</div>
+              <div class="what"><div class="t">Lecture 19</div><div class="l">Hewitt Hall 204</div></div>
+            </div>
+            <div class="sched">
+              <div class="when"><b>Fri</b>10 AM</div>
+              <div class="what"><div class="t">Lecture 20 — quiz</div><div class="l">Hewitt Hall 204 · 30 min</div></div>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+
+  </main>
+
+</div>
+
+<script>
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click',()=>{
+      t.parentElement.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+    });
+  });
+  document.querySelectorAll('.task .check').forEach(c=>{
+    c.addEventListener('click',e=>{
+      e.stopPropagation();
+      c.closest('.task').classList.toggle('done');
+    });
+  });
+  document.querySelectorAll('.topic').forEach(t=>{
+    t.addEventListener('click',()=>{
+      const check=t.querySelector('.h .check');
+      t.classList.toggle('done');
+      if(check) check.textContent=t.classList.contains('done')?'✓':'';
+    });
+  });
+</script>
+
+</body>
+</html>

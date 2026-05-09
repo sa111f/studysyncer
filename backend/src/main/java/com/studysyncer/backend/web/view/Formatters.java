@@ -101,6 +101,28 @@ public class Formatters {
         return Math.max(0, totalMinutes) % 60;
     }
 
+    public String fmtTime(Instant when) {
+        if (when == null) {
+            return "";
+        }
+        return HOUR_MIN_AM_PM.format(when.atZone(TZ));
+    }
+
+    public String fmtDuration(Integer minutes) {
+        if (minutes == null || minutes <= 0) {
+            return "";
+        }
+        if (minutes < 60) {
+            return minutes + " min";
+        }
+        int h = minutes / 60;
+        int m = minutes % 60;
+        if (m == 0) {
+            return h == 1 ? "1 hour" : h + " hours";
+        }
+        return h + "h " + m + "m";
+    }
+
     public String fmtEstimate(Integer minutes) {
         if (minutes == null || minutes <= 0) {
             return "";

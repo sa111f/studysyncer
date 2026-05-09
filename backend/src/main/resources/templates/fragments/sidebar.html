@@ -6,8 +6,8 @@
     <div class="ws">
         <div class="ws-icon" th:text="${sidebarUser != null ? sidebarUser.avatarInitial : 'S'}">S</div>
         <div class="ws-name"
-             th:text="${sidebarUser != null ? sidebarUser.firstName + ' ' + sidebarUser.lastName : 'StudySyncer'}">
-            StudySyncer
+             th:text="${sidebarUser != null ? sidebarUser.firstName + '''s space' : 'My space'}">
+            My space
         </div>
         <span class="ws-chev" aria-hidden="true">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -18,10 +18,9 @@
     </div>
 
     <button class="cmd" type="button" aria-label="Open command menu">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-             stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="7"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        <svg class="ic" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+            <circle cx="7" cy="7" r="4.5"></circle>
+            <path d="M11 11l3.5 3.5"></path>
         </svg>
         <span>Search…</span>
         <span class="cmd-kbd">⌘K</span>
@@ -29,57 +28,60 @@
 
     <nav class="pinned" aria-label="Primary">
         <a class="pin" th:classappend="${currentNav == 'today'} ? ' active' : ''" th:href="@{/}">
-            <svg class="pin-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="9"></circle>
-                <polyline points="12 7 12 12 15 14"></polyline>
+            <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M2.5 8 L8 2.5 L13.5 8 L13.5 13.5 L9.5 13.5 L9.5 9.5 L6.5 9.5 L6.5 13.5 L2.5 13.5 Z"></path>
             </svg>
-            <span class="nav-label">Today</span>
+            Today
         </a>
         <a class="pin" th:classappend="${currentNav == 'tasks'} ? ' active' : ''" th:href="@{/tasks}">
-            <svg class="pin-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="20 6 9 17 4 12"></polyline>
+            <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M3 4h10M3 8h10M3 12h7"></path>
             </svg>
-            <span class="nav-label">Tasks</span>
+            Tasks
+            <span class="badge"
+                  th:if="${sidebarTaskCount != null and sidebarTaskCount > 0}"
+                  th:text="${sidebarTaskCount}">9</span>
         </a>
         <a class="pin" th:classappend="${currentNav == 'exams'} ? ' active' : ''" th:href="@{/exams}">
-            <svg class="pin-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <rect x="4" y="4" width="16" height="16" rx="2"></rect>
-                <line x1="9" y1="9" x2="15" y2="9"></line>
-                <line x1="9" y1="13" x2="15" y2="13"></line>
-                <line x1="9" y1="17" x2="13" y2="17"></line>
+            <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <rect x="2.5" y="3.5" width="11" height="9.5" rx="1.5"></rect>
+                <path d="M5.5 6.5h5M5.5 9h3"></path>
             </svg>
-            <span class="nav-label">Exams</span>
+            Exams
+            <span class="badge warn"
+                  th:if="${sidebarExamDays != null}"
+                  th:text="${sidebarExamDays} + 'd'">12d</span>
         </a>
         <a class="pin" th:classappend="${currentNav == 'tracker'} ? ' active' : ''" th:href="@{/tracker}">
-            <svg class="pin-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <polyline points="3 17 9 11 13 15 21 7"></polyline>
-                <polyline points="14 7 21 7 21 14"></polyline>
+            <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <path d="M2 12 L6 8 L9 11 L14 5"></path>
             </svg>
-            <span class="nav-label">Tracker</span>
+            Tracker
         </a>
         <a class="pin" th:classappend="${currentNav == 'focus'} ? ' active' : ''" th:href="@{/focus}">
-            <svg class="pin-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <circle cx="12" cy="12" r="9"></circle>
-                <circle cx="12" cy="12" r="3"></circle>
+            <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <circle cx="8" cy="8" r="5.5"></circle>
+                <path d="M8 5v3l2 1.5"></path>
             </svg>
-            <span class="nav-label">Focus</span>
+            Focus
         </a>
     </nav>
 
-    <section class="spaces" th:if="${sidebarCourses != null and !sidebarCourses.isEmpty()}">
+    <section class="spaces-section" th:if="${sidebarCourses != null and !sidebarCourses.isEmpty()}">
         <div class="section-label">Spaces</div>
-        <ul class="space-list">
-            <li class="space" th:each="course : ${sidebarCourses}">
+        <div class="spaces">
+            <a class="space"
+               th:each="course : ${sidebarCourses}"
+               th:href="@{'/spaces/' + ${course.slug}}"
+               th:classappend="${currentCourseSlug != null and currentCourseSlug == course.slug} ? ' current' : ''">
                 <span class="space-pebble"
                       th:classappend="${course.colorKey.name() == 'PHYSICS' and course.colorVariant.name() == 'DEEP' ? 'pebble-phys2' : (course.colorKey.name() == 'PHYSICS' ? 'pebble-phys' : (course.colorKey.name() == 'CS' ? 'pebble-cs' : (course.colorKey.name() == 'ENG' ? 'pebble-eng' : (course.colorKey.name() == 'PHIL' ? 'pebble-phil' : 'pebble-other'))))}"></span>
                 <span class="space-code" th:text="${course.code}">PHYS 211</span>
-            </li>
-        </ul>
+                <span class="count"
+                      th:if="${sidebarCourseCounts != null and sidebarCourseCounts[course.id] != null and sidebarCourseCounts[course.id] > 0}"
+                      th:text="${sidebarCourseCounts[course.id]}">3</span>
+            </a>
+        </div>
     </section>
 
     <section class="tags" th:if="${sidebarTags != null and !sidebarTags.isEmpty()}">

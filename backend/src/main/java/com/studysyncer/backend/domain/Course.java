@@ -49,4 +49,17 @@ public class Course {
 
     @Column(nullable = false)
     private Integer displayOrder;
+
+    private String section;
+    private String term;
+    private String professor;
+    private String room;
+    private Integer credits;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    public String getSlug() {
+        return code == null ? null : code.replace(' ', '-');
+    }
 }

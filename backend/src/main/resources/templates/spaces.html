@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body th:class="'page-space acc-' + (${space.pillClass} != '' ? ${space.pillClass} : 'cs')">
+
+<div class="shell">
+
+    <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+    <main class="canvas">
+
+        <header class="space-hero">
+            <div class="crumb">
+                <a th:href="@{/}">Spaces</a>
+                <span class="sep">›</span>
+                <span th:text="${space.course.code}">PHYS 211</span>
+            </div>
+
+            <div class="hero-row">
+                <div class="course-mark" th:text="${space.courseInitial}">P</div>
+                <div class="hero-info">
+                    <div class="code">
+                        <span th:text="${space.course.code}">PHYS 211</span>
+                        <th:block th:if="${space.course.term != null}"> · <span th:text="${space.course.term}">Spring 2026</span></th:block>
+                        <th:block th:if="${space.course.section != null}"> · <span th:text="${space.course.section}">Section 02</span></th:block>
+                    </div>
+                    <h1>
+                        <th:block th:if="${space.nameHead != null and !space.nameHead.isEmpty()}" th:text="${space.nameHead}"></th:block>
+                        <span class="em" th:text="${space.nameEm}">Mechanics.</span>
+                    </h1>
+                    <p class="desc" th:if="${space.course.description != null}" th:text="${space.course.description}">Description.</p>
+                    <div class="hero-meta">
+                        <span th:if="${space.course.professor != null}">
+                            <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                                <circle cx="8" cy="6" r="2.5"></circle>
+                                <path d="M3 14c0-2.8 2.2-5 5-5s5 2.2 5 5"></path>
+                            </svg>
+                            <span th:text="${space.course.professor}">Prof.</span>
+                        </span>
+                        <span class="sep" th:if="${space.course.professor != null and space.scheduleSummary != null}">·</span>
+                        <span th:if="${space.scheduleSummary != null}">
+                            <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                                <rect x="2" y="3" width="12" height="11" rx="1.5"></rect>
+                                <path d="M2 6h12M5 1.5v3M11 1.5v3"></path>
+                            </svg>
+                            <span th:text="${space.scheduleSummary}">MWF 10:00 — 10:50</span>
+                        </span>
+                        <span class="sep" th:if="${space.course.room != null}">·</span>
+                        <span th:if="${space.course.room != null}">
+                            <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                                <path d="M8 14s5-4.5 5-9a5 5 0 1 0-10 0c0 4.5 5 9 5 9z"></path>
+                                <circle cx="8" cy="5" r="1.8"></circle>
+                            </svg>
+                            <span th:text="${space.course.room}">Hewitt Hall 204</span>
+                        </span>
+                        <span class="sep" th:if="${space.course.credits != null}">·</span>
+                        <span th:if="${space.course.credits != null}">
+                            <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                                <path d="M3 13h10M3 13l3-8h4l3 8"></path>
+                            </svg>
+                            <span th:text="${space.course.credits} + ' credits'">4 credits</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="hero-actions">
+                    <a class="btn primary" th:href="@{/focus}">
+                        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="8" cy="8" r="5.5"></circle>
+                            <path d="M8 5v3l2 1.5"></path>
+                        </svg>
+                        Start focus session
+                    </a>
+                    <button class="btn ghost" type="button" disabled title="Coming soon">
+                        <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M8 3v10M3 8h10"></path>
+                        </svg>
+                        Add task<span class="soon">soon</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="stats-strip">
+            <div class="ss-cell">
+                <div class="l">Open tasks</div>
+                <div class="v">
+                    <span th:text="${space.stats.openTasksOpen}">3</span>
+                    <span class="u" th:text="'of ' + ${space.stats.openTasksTotal}">of 14</span>
+                </div>
+                <div class="s">
+                    <span th:text="${space.stats.openTasksDueToday} + ' due today'">1 due today</span>
+                    <th:block th:if="${space.stats.openTasksOverdue > 0}">
+                        · <span th:text="${space.stats.openTasksOverdue} + ' overdue'">1 overdue</span>
+                    </th:block>
+                </div>
+            </div>
+            <div class="ss-cell">
+                <div class="l">Time this week</div>
+                <div class="v">
+                    <span th:text="${fmt.hoursPart(space.stats.weekMinutes)}">3</span><span class="u">h</span>
+                    <span th:text="' ' + ${fmt.minutesPart(space.stats.weekMinutes)}">02</span><span class="u">m</span>
+                </div>
+                <div class="s" th:text="${space.stats.weekDeltaLabel}">+ 22m vs last week</div>
+            </div>
+            <div class="ss-cell" th:if="${space.stats.nextExamDays != null}">
+                <div class="l">Next exam</div>
+                <div class="v"><span class="em" th:text="${space.stats.nextExamDays}">45</span><span class="u"> days</span></div>
+                <div class="s">
+                    <span th:text="${space.nextExam != null ? space.nextExam.exam.examType.name().toLowerCase() : 'exam'}">final</span>
+                    · <span th:text="${space.nextExam != null ? space.nextExam.dateLine : ''}">Wed Jun 12</span>
+                </div>
+            </div>
+            <div class="ss-cell" th:unless="${space.stats.nextExamDays != null}">
+                <div class="l">Next exam</div>
+                <div class="v"><span class="em">—</span></div>
+                <div class="s">none scheduled</div>
+            </div>
+        </div>
+
+        <nav class="tabs">
+            <button class="tab active" type="button">Overview</button>
+            <button class="tab" type="button" disabled title="Coming soon">
+                Tasks
+                <span class="n" th:text="${space.openTasksTotal}">3</span>
+                <span class="soon">soon</span>
+            </button>
+        </nav>
+
+        <div class="body">
+
+            <div class="main">
+
+                <div class="next-exam" th:if="${space.nextExam != null}">
+                    <div class="ne-cd">
+                        <div class="n" th:text="${space.nextExam.daysUntil}">45</div>
+                        <div class="u">DAYS</div>
+                    </div>
+                    <div class="ne-info">
+                        <div class="l" th:text="'Pinned · ' + ${space.nextExam.exam.examType.name().toLowerCase()}">Pinned · final</div>
+                        <h3>
+                            <span th:text="${space.nextExam.titleHead}">Mechanics</span>
+                            <span class="em" th:text="' ' + ${space.nextExam.titleEm}"> — final exam.</span>
+                        </h3>
+                        <div class="meta">
+                            <span th:text="${space.nextExam.dateLine}">Wed Jun 12</span>
+                            <span class="sep">·</span>
+                            <span th:text="${fmt.fmtTime(space.nextExam.exam.startsAt)}">10:00 AM</span>
+                            <th:block th:if="${space.nextExam.exam.location != null and !space.nextExam.exam.location.isEmpty()}">
+                                <span class="sep">·</span>
+                                <span th:text="${space.nextExam.exam.location}">Hewitt 204</span>
+                            </th:block>
+                            <th:block th:if="${space.nextExam.exam.durationMinutes != null and space.nextExam.exam.durationMinutes > 0}">
+                                <span class="sep">·</span>
+                                <span th:text="${fmt.fmtDuration(space.nextExam.exam.durationMinutes)}">3 hours</span>
+                            </th:block>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="sect" th:if="${!space.openTasks.isEmpty()}">
+                    <div class="sect-head">
+                        <h2>Open tasks <span class="em">— from this course</span></h2>
+                        <span class="count" th:text="${space.openTasks.size()}">3</span>
+                        <a class="more" th:href="@{/tasks(filter='active')}">View all</a>
+                    </div>
+                    <div class="tasks">
+                        <div class="task" th:each="ot : ${space.openTasks}">
+                            <form th:action="@{'/tasks/' + ${ot.task.id} + '/toggle'}" method="post" style="display:contents;">
+                                <input type="hidden" name="filter" value="all"/>
+                                <button type="submit" class="check" aria-label="Toggle complete">✓</button>
+                            </form>
+                            <div class="body">
+                                <div class="t">
+                                    <span th:text="${ot.task.title}">Lab 2 writeup</span>
+                                    <em th:if="${ot.task.italicSuffix != null}" th:text="' — ' + ${ot.task.italicSuffix}"> — Pendulum</em>
+                                </div>
+                                <div class="sub" th:if="${ot.estLabel != null}">
+                                    <span th:text="'~' + ${ot.estLabel}">~2h</span>
+                                </div>
+                            </div>
+                            <span class="est" th:if="${ot.estLabel != null}" th:text="${ot.estLabel}">2h</span>
+                            <span th:class="'due ' + ${ot.dueClass}" th:text="${ot.dueLabel}">Today · 11 PM</span>
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <aside class="rail">
+
+                <div class="rail-section">
+                    <div class="label">Time invested</div>
+                    <div class="time-card">
+                        <div class="time-row">
+                            <div class="time-big">
+                                <span th:text="${fmt.hoursPart(space.timeInvested.weekMinutes)}">3</span><span class="u">h</span>
+                                <span th:text="' ' + ${fmt.minutesPart(space.timeInvested.weekMinutes)}">02</span><span class="u">m</span>
+                            </div>
+                            <div class="time-sub">this week</div>
+                        </div>
+                        <div class="mini-bars">
+                            <div th:each="b : ${space.timeInvested.bars}"
+                                 th:class="'mb' + (${b.filled} ? ' f' : '') + (${b.isToday} ? ' today' : '')"
+                                 th:style="'height:' + ${b.heightPercent} + '%;'"></div>
+                        </div>
+                        <div class="mini-labels">
+                            <span th:each="b : ${space.timeInvested.bars}" th:text="${b.dayLetter}">M</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rail-section" th:if="${!space.schedule.isEmpty()}">
+                    <div class="label">
+                        Schedule
+                        <span class="more">This week</span>
+                    </div>
+                    <div class="schedule">
+                        <div th:each="s : ${space.schedule}"
+                             th:class="'sched' + (${s.isNext} ? ' next' : '')">
+                            <div class="when">
+                                <b th:text="${s.dayLabel}">Tue</b>
+                                <span th:text="${s.timeLabel}">2 PM</span>
+                            </div>
+                            <div class="what">
+                                <div class="t" th:text="${s.item.title}">Lab — Pendulum II</div>
+                                <div class="l">
+                                    <span th:if="${s.location != null and !s.location.isEmpty()}" th:text="${s.location}">Lab Annex 3</span>
+                                    <th:block th:if="${s.location != null and !s.location.isEmpty() and s.durationMinutes != null and s.durationMinutes > 0}">
+                                        <span> · </span>
+                                    </th:block>
+                                    <span th:if="${s.durationMinutes != null and s.durationMinutes > 0}" th:text="${fmt.fmtDuration(s.durationMinutes)}">2 hours</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </aside>
+
+        </div>
+
+    </main>
+
+</div>
+
+</body>
+</html>

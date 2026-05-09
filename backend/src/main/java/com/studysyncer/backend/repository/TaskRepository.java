@@ -36,6 +36,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     long countByUserAndCourseAndStatus(User user, Course course, TaskStatus status);
 
+    long countByUserAndCourseAndStatusAndDueAtBetween(User user, Course course, TaskStatus status, Instant start, Instant end);
+
+    long countByUserAndCourseAndStatusAndDueAtBefore(User user, Course course, TaskStatus status, Instant cutoff);
+
     long countByUserAndCourse(User user, Course course);
 
     long countByUserAndStatusAndCompletedAtBetween(User user, TaskStatus status, Instant start, Instant end);
