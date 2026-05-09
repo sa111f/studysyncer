@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html th:fragment="layout(content)" lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body>
+<div class="shell">
+    <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+    <main class="canvas">
+        <div class="main">
+            <th:block th:insert="${content}"></th:block>
+        </div>
+    </main>
+</div>
+</body>
+</html>

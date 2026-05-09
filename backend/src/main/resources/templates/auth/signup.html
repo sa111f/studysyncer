@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body class="auth-body">
+<main class="auth-shell">
+    <section class="auth-card">
+        <h1 class="auth-title">Create your account</h1>
+        <p class="auth-sub">A few details, then you're in.</p>
+
+        <form th:action="@{/signup}" method="post" th:object="${signupForm}" class="auth-form" novalidate>
+            <div class="auth-row">
+                <label class="auth-field">
+                    <span class="auth-label">First name</span>
+                    <input type="text" th:field="*{firstName}" autocomplete="given-name">
+                    <span class="auth-error" th:if="${#fields.hasErrors('firstName')}"
+                          th:errors="*{firstName}"></span>
+                </label>
+                <label class="auth-field">
+                    <span class="auth-label">Last name</span>
+                    <input type="text" th:field="*{lastName}" autocomplete="family-name">
+                    <span class="auth-error" th:if="${#fields.hasErrors('lastName')}"
+                          th:errors="*{lastName}"></span>
+                </label>
+            </div>
+            <label class="auth-field">
+                <span class="auth-label">Email</span>
+                <input type="email" th:field="*{email}" autocomplete="email">
+                <span class="auth-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></span>
+            </label>
+            <label class="auth-field">
+                <span class="auth-label">Password</span>
+                <input type="password" th:field="*{password}" autocomplete="new-password">
+                <span class="auth-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></span>
+            </label>
+            <button type="submit" class="auth-submit">Create account</button>
+        </form>
+
+        <p class="auth-foot">
+            Already have an account?
+            <a th:href="@{/login}">Sign in</a>
+        </p>
+    </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body class="auth-body">
+<main class="auth-shell">
+    <section class="auth-card">
+        <h1 class="auth-title">StudySyncer</h1>
+        <p class="auth-sub">Sign in to keep going.</p>
+
+        <p class="auth-msg auth-msg-error" th:if="${errorMessage != null}" th:text="${errorMessage}">error</p>
+        <p class="auth-msg auth-msg-info" th:if="${infoMessage != null}" th:text="${infoMessage}">info</p>
+
+        <form th:action="@{/login}" method="post" class="auth-form" novalidate>
+            <label class="auth-field">
+                <span class="auth-label">Email</span>
+                <input type="email" name="email" autocomplete="email" required>
+            </label>
+            <label class="auth-field">
+                <span class="auth-label">Password</span>
+                <input type="password" name="password" autocomplete="current-password" required>
+            </label>
+            <button type="submit" class="auth-submit">Sign in</button>
+        </form>
+
+        <p class="auth-foot">
+            New here?
+            <a th:href="@{/signup}">Create an account</a>
+        </p>
+    </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,10 @@
+target/
+.idea/
+*.iml
+.vscode/
+.DS_Store
+application-local-secrets.yml
+db_data/
+/tmp/sd/
+*.log
+backend/spring*.log
