@@ -1,0 +1,4 @@
+CREATE TABLE app_meta (
+    id SERIAL PRIMARY KEY,
+    initialized_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
