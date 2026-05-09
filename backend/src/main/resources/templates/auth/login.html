@@ -1,32 +1,131 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/head :: head}"></head>
-<body class="auth-body">
-<main class="auth-shell">
-    <section class="auth-card">
-        <h1 class="auth-title">StudySyncer</h1>
-        <p class="auth-sub">Sign in to keep going.</p>
+<body>
 
-        <p class="auth-msg auth-msg-error" th:if="${errorMessage != null}" th:text="${errorMessage}">error</p>
-        <p class="auth-msg auth-msg-info" th:if="${infoMessage != null}" th:text="${infoMessage}">info</p>
+<div class="page page--login">
 
-        <form th:action="@{/login}" method="post" class="auth-form" novalidate>
-            <label class="auth-field">
-                <span class="auth-label">Email</span>
-                <input type="email" name="email" autocomplete="email" required>
-            </label>
-            <label class="auth-field">
-                <span class="auth-label">Password</span>
-                <input type="password" name="password" autocomplete="current-password" required>
-            </label>
-            <button type="submit" class="auth-submit">Sign in</button>
-        </form>
+    <!-- Left -->
+    <aside class="panel">
+        <div class="brand">
+            <div class="brand-mark">S</div>
+            Study<span class="x">Syncer</span>
+        </div>
 
-        <p class="auth-foot">
-            New here?
-            <a th:href="@{/signup}">Create an account</a>
-        </p>
-    </section>
-</main>
+        <div class="panel-body">
+            <div class="quote-eyebrow">Welcome back</div>
+            <h1 class="quote">Pick up <span class="em">where you left off</span> — your <span class="em2">week</span> is waiting.</h1>
+            <p class="quote-sub">Three things due tonight, one writeup overdue, and Quantum is in twelve days. Let's get to it.</p>
+
+            <div class="ambient">
+                <div class="at">
+                    <span class="check"></span>
+                    <span class="text">Lab 2 writeup — <em>Pendulum</em></span>
+                    <span class="pill physics"><span class="dot"></span>PHYS 211</span>
+                    <span class="due">3d late</span>
+                </div>
+                <div class="at">
+                    <span class="check"></span>
+                    <span class="text">Problem set 3</span>
+                    <span class="pill cs"><span class="dot"></span>CS 232</span>
+                    <span class="due">11 PM</span>
+                </div>
+                <div class="at done">
+                    <span class="check"></span>
+                    <span class="text">Discussion post — Plato's cave</span>
+                    <span class="pill phil"><span class="dot"></span>PHIL 240</span>
+                    <span class="due">done</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-foot">⌘K to search · N for new task · ↵ to focus</div>
+    </aside>
+
+    <!-- Right form -->
+    <main class="form-wrap">
+        <div class="form-card">
+            <div class="auth-flash error" th:if="${param.error}">
+                Wrong email or password. Try again.
+            </div>
+            <div class="auth-flash info" th:if="${param.logout}">
+                You've been signed out.
+            </div>
+            <div class="auth-flash success" th:if="${param.registered}">
+                Account created — please log in.
+            </div>
+
+            <div class="form-eyebrow">Log in</div>
+            <h2 class="form-title">Welcome <span class="em">back.</span></h2>
+            <p class="form-sub">Sign in to manage your tasks, exams, and study sessions.</p>
+
+            <div class="oauth">
+                <button type="button" disabled title="Coming soon">
+                    <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Continue with Google
+                    <span class="soon">soon</span>
+                </button>
+                <button type="button" disabled title="Coming soon">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16.365 1.43c0 1.14-.43 2.25-1.21 3.07-.85.91-2.27 1.6-3.41 1.51-.13-1.13.43-2.27 1.16-3.04.86-.95 2.39-1.66 3.46-1.54zm4.16 16.42c-.59 1.37-.87 1.98-1.62 3.18-1.05 1.68-2.52 3.78-4.36 3.79-1.62.02-2.04-1.08-4.24-1.07-2.2.01-2.66 1.09-4.28 1.07-1.84-.02-3.24-1.91-4.29-3.59-2.93-4.69-3.24-10.19-1.43-13.12 1.28-2.08 3.31-3.3 5.21-3.3 1.94 0 3.16 1.07 4.77 1.07 1.56 0 2.51-1.07 4.76-1.07 1.69 0 3.49.92 4.77 2.51-4.19 2.3-3.51 8.31.71 10.53z"/></svg>
+                    Continue with Apple
+                    <span class="soon">soon</span>
+                </button>
+            </div>
+
+            <div class="divider">or</div>
+
+            <form th:action="@{/login}" method="post" autocomplete="on">
+                <div class="field">
+                    <label for="email">Email</label>
+                    <div class="control">
+                        <input id="email" name="email" type="email" placeholder="you@university.edu" autocomplete="email" required/>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="control">
+                        <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required/>
+                        <button type="button" class="toggle-eye" aria-label="Show password">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/><circle cx="8" cy="8" r="2.2"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <label class="check-row">
+                        <input type="checkbox" name="remember-me" checked/>
+                        Keep me logged in
+                    </label>
+                    <a href="#" class="forgot">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="submit">
+                    Log in
+                    <svg class="arrow" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8h10M9 4l4 4-4 4"/></svg>
+                </button>
+            </form>
+
+            <div class="switch">
+                New to StudySyncer? <a th:href="@{/signup}">Create an account</a>
+            </div>
+        </div>
+
+        <div class="legal">
+            By signing in you agree to our <a href="#">Terms</a> &amp; <a href="#">Privacy</a>
+        </div>
+    </main>
+
+</div>
+
+<script>
+    document.querySelectorAll('.toggle-eye').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const inp = btn.parentElement.querySelector('input');
+            inp.type = inp.type === 'password' ? 'text' : 'password';
+        });
+    });
+</script>
+
 </body>
 </html>

@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 @Controller
 public class AuthController {
 
@@ -37,11 +39,15 @@ public class AuthController {
         if (registered != null) {
             model.addAttribute("infoMessage", "Account created — please log in.");
         }
+        model.addAttribute("pageTitle", "Log in · StudySyncer");
+        model.addAttribute("extraCss", List.of("/css/auth.css"));
         return "auth/login";
     }
 
     @GetMapping("/signup")
-    public String signupPage(@ModelAttribute("signupForm") SignupForm signupForm) {
+    public String signupPage(@ModelAttribute("signupForm") SignupForm signupForm, Model model) {
+        model.addAttribute("pageTitle", "Create your account · StudySyncer");
+        model.addAttribute("extraCss", List.of("/css/auth.css"));
         return "auth/signup";
     }
 
