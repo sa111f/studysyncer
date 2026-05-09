@@ -1,9 +1,239 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/base :: layout(content=~{::content})}">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
 <body>
-<th:block th:fragment="content">
-    <h1>Today</h1>
-</th:block>
+
+<div class="shell">
+
+    <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+    <main class="canvas">
+
+        <div class="main">
+
+            <div class="topbar">
+                <div class="crumb">
+                    <b>Today</b>
+                    <span class="sep">·</span>
+                    <span th:text="${today.greetingDateLine}">Tuesday, May 9</span>
+                </div>
+                <div class="right">
+                    <button class="ibtn" type="button" title="Filter">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 4h12M4 8h8M6 12h4"/></svg>
+                    </button>
+                    <button class="ibtn" type="button" title="Calendar">
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3"/></svg>
+                    </button>
+                    <button class="new-btn" type="button" title="New task">
+                        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"/></svg>
+                        New
+                        <span class="kbd">N</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="greet">
+                <div class="greet-eyebrow" th:text="${today.greetingEyebrow}">Tuesday evening · Week 12</div>
+                <h1 class="greet-title">
+                    Good <span th:text="${today.greetingTimeOfDay}">evening</span>,
+                    <span class="em" th:text="${today.greetingFirstName} + '.'">Saal.</span>
+                </h1>
+                <p class="greet-sub" th:text="${today.greetingSubtitle}">
+                    Three things due tonight, one writeup overdue, and Quantum is in twelve days.
+                </p>
+            </div>
+
+            <div class="focus-hero" th:if="${today.activeSession != null}">
+                <div class="focus-orb">
+                    <svg viewBox="0 0 64 64">
+                        <circle class="t" cx="32" cy="32" r="26"/>
+                        <circle class="p" cx="32" cy="32" r="26" stroke-dasharray="163" stroke-dashoffset="118"/>
+                    </svg>
+                    <span class="pulse"></span>
+                </div>
+                <div class="focus-info">
+                    <div class="l1"><span class="live-dot"></span>In session · pomodoro 1 of 4</div>
+                    <div class="l2">
+                        <span th:text="${today.activeSession.title}">Problem set 3</span>
+                        <span class="ctx" th:text="' — ' + ${today.activeSession.course.code}"> — CS 232</span>
+                    </div>
+                </div>
+                <div class="focus-time"
+                     th:text="${fmt.fmtClock(today.activeSessionElapsedSeconds)}">
+                    39:21
+                </div>
+                <div class="focus-actions" style="grid-column: 3; align-self: center;">
+                    <button class="ghost-btn" type="button">Pause</button>
+                    <button class="ghost-btn solid" type="button">End</button>
+                </div>
+            </div>
+
+            <section class="sect alert" th:if="${!today.overdueTasks.isEmpty()}">
+                <div class="sect-head">
+                    <h2>Overdue <span class="em">— attend first</span></h2>
+                    <span class="count" th:text="${today.overdueTasks.size()}">1</span>
+                </div>
+                <div class="row" th:each="t : ${today.overdueTasks}">
+                    <div class="check overdue"></div>
+                    <div class="row-title">
+                        <span class="text">
+                            <span th:text="${t.title}">Lab 2 writeup</span><th:block th:if="${t.italicSuffix != null}"> — <em th:text="${t.italicSuffix}">…</em></th:block>
+                        </span>
+                        <span th:class="'pill ' + ${#strings.toLowerCase(t.course.colorKey.name())}">
+                            <span class="dot"></span><span th:text="${t.course.code}">PHYS 211</span>
+                        </span>
+                    </div>
+                    <div class="due overdue"
+                         th:text="${fmt.fmtOverdue(t.dueAt)}">3d late</div>
+                    <div class="row-action">⋯</div>
+                </div>
+            </section>
+
+            <section class="sect">
+                <div class="sect-head">
+                    <h2>Today</h2>
+                    <span class="count" th:text="${today.todayTasks.size()}">3</span>
+                    <span class="add">+ Add task</span>
+                </div>
+                <div class="row" th:each="t : ${today.todayTasks}">
+                    <div class="check"></div>
+                    <div class="row-title">
+                        <span class="text">
+                            <span th:text="${t.title}">Read Ch. 4</span><th:block th:if="${t.italicSuffix != null}"> — <em th:text="${t.italicSuffix}">Equilibrium</em></th:block>
+                        </span>
+                        <span th:class="'pill ' + ${#strings.toLowerCase(t.course.colorKey.name())}">
+                            <span class="dot"></span><span th:text="${t.course.code}">PHYS 211</span>
+                        </span>
+                    </div>
+                    <div th:class="'due' + (${fmt.isSoon(t.dueAt)} ? ' soon' : '')"
+                         th:text="${fmt.fmtToday(t.dueAt)}">9 PM</div>
+                    <div class="row-action">⋯</div>
+                </div>
+            </section>
+
+            <section class="sect" th:if="${!today.weekTasks.isEmpty()}">
+                <div class="sect-head">
+                    <h2>This week <span class="em">— ahead</span></h2>
+                    <span class="count" th:text="${today.weekTasks.size()}">3</span>
+                    <span class="add">+ Add task</span>
+                </div>
+                <div class="row" th:each="t : ${today.weekTasks}">
+                    <div class="check"></div>
+                    <div class="row-title">
+                        <span class="text">
+                            <span th:text="${t.title}">Reading response</span><th:block th:if="${t.italicSuffix != null}"> — <em th:text="${t.italicSuffix}">Foucault</em></th:block>
+                        </span>
+                        <span th:class="'pill ' + ${#strings.toLowerCase(t.course.colorKey.name())}">
+                            <span class="dot"></span><span th:text="${t.course.code}">PHIL 240</span>
+                        </span>
+                    </div>
+                    <div class="due"
+                         th:text="${fmt.fmtWeekday(t.dueAt)}">Wed</div>
+                    <div class="row-action">⋯</div>
+                </div>
+            </section>
+
+        </div>
+
+        <aside class="rail">
+
+            <div class="rail-section">
+                <div class="label">Today's goal</div>
+                <div class="goal">
+                    <div class="goal-row">
+                        <div class="donut">
+                            <svg viewBox="0 0 100 100">
+                                <defs>
+                                    <linearGradient id="goalGrad" x1="0" x2="1" y1="0" y2="1">
+                                        <stop offset="0%" stop-color="#6db58c"/>
+                                        <stop offset="100%" stop-color="#a98ed4"/>
+                                    </linearGradient>
+                                </defs>
+                                <circle class="t" cx="50" cy="50" r="42"/>
+                                <circle class="p" cx="50" cy="50" r="42" stroke-dasharray="264"
+                                        th:attr="stroke-dashoffset=${fmt.dailyGoalDashOffset(today.dailyGoalPercent)}"/>
+                            </svg>
+                            <div class="cap" th:text="${today.dailyGoalPercent} + '%'">35%</div>
+                        </div>
+                        <div class="goal-info">
+                            <div class="h">
+                                <span th:text="${today.minutesStudiedToday}">52</span><span class="unit"> of <span th:text="${today.dailyGoalMinutes}">150</span> min</span>
+                            </div>
+                            <div class="s" th:if="${today.dailyGoalRemainingMinutes > 0}"
+                                 th:text="'~' + ${today.dailyGoalRemainingMinutes} + 'm to go · ' + ${today.currentStreakDays} + 'd streak'">
+                                ~98m to go · 5d streak
+                            </div>
+                            <div class="s" th:if="${today.dailyGoalRemainingMinutes == 0}"
+                                 th:text="'Done for today · ' + ${today.currentStreakDays} + 'd streak'">
+                                Done for today · 5d streak
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rail-section" th:if="${!today.upcomingExams.isEmpty()}">
+                <div class="label">Upcoming exams <span class="more">See all</span></div>
+                <div th:each="ex,iter : ${today.upcomingExams}"
+                     th:with="days=${fmt.daysUntil(ex.startsAt)}"
+                     th:class="'exam' + ((${iter.first} and ${days} le 14) ? ' soon' : '')">
+                    <div class="cd">
+                        <div class="n" th:text="${days}">12</div>
+                        <div class="u">DAYS</div>
+                    </div>
+                    <div class="exam-body">
+                        <div class="t" th:text="${ex.title}">Midterm — Quantum Mechanics</div>
+                        <div class="s">
+                            <span th:class="'pill ' + ${#strings.toLowerCase(ex.course.colorKey.name())}"
+                                  style="padding:1px 6px;font-size:10px;">
+                                <span class="dot"></span><span th:text="${ex.course.code}">PHYS 311</span>
+                            </span>
+                            <span th:text="'· ' + ${fmt.fmtMonthDay(ex.startsAt)} + ' · ' + ${ex.location}">
+                                · May 10 · Hewitt 204
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rail-section">
+                <div class="label">This week</div>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="n">
+                            <span th:text="${today.weekTasksCompleted}">3</span><span class="u" th:text="'/' + ${today.weekTasksTotal}">/6</span>
+                        </div>
+                        <div class="l">Tasks</div>
+                    </div>
+                    <div class="stat">
+                        <div class="n" th:if="${today.weekMinutesStudied < 60}">
+                            <span th:text="${today.weekMinutesStudied}">52</span><span class="u">m</span>
+                        </div>
+                        <div class="n" th:if="${today.weekMinutesStudied >= 60}">
+                            <span th:text="${today.weekMinutesStudied / 60}">5</span><span class="u">h</span>
+                            <span th:if="${today.weekMinutesStudied % 60 != 0}"
+                                  th:text="' ' + ${today.weekMinutesStudied % 60}">10</span><span class="u" th:if="${today.weekMinutesStudied % 60 != 0}">m</span>
+                        </div>
+                        <div class="l">Studied</div>
+                    </div>
+                    <div class="stat">
+                        <div class="n">
+                            <span th:text="${today.currentStreakDays}">5</span><span class="u">d</span>
+                        </div>
+                        <div class="l">Streak</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="hint">
+                <span class="k">⌘K</span> to search · <span class="k">N</span> for new task · <span class="k">space</span> to start focus
+            </div>
+
+        </aside>
+
+    </main>
+
+</div>
+
 </body>
 </html>

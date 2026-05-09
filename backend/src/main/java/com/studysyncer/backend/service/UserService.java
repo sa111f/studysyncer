@@ -18,13 +18,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final DailyGoalRepository dailyGoalRepository;
     private final PasswordEncoder passwordEncoder;
+    private final DemoSeeder demoSeeder;
 
     public UserService(UserRepository userRepository,
                        DailyGoalRepository dailyGoalRepository,
-                       PasswordEncoder passwordEncoder) {
+                       PasswordEncoder passwordEncoder,
+                       DemoSeeder demoSeeder) {
         this.userRepository = userRepository;
         this.dailyGoalRepository = dailyGoalRepository;
         this.passwordEncoder = passwordEncoder;
+        this.demoSeeder = demoSeeder;
     }
 
     @Transactional
@@ -51,6 +54,8 @@ public class UserService {
         goal.setCreatedAt(now);
         goal.setUpdatedAt(now);
         dailyGoalRepository.save(goal);
+
+        demoSeeder.seedIfEmpty(saved);
 
         return saved;
     }

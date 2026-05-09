@@ -76,14 +76,7 @@
         <ul class="space-list">
             <li class="space" th:each="course : ${sidebarCourses}">
                 <span class="space-pebble"
-                      th:classappend="' ' + (
-                        ${course.colorKey.name() == 'PHYSICS' and course.colorVariant.name() == 'DEEP'} ? 'pebble-phys2' :
-                        ${course.colorKey.name() == 'PHYSICS'} ? 'pebble-phys' :
-                        ${course.colorKey.name() == 'CS'} ? 'pebble-cs' :
-                        ${course.colorKey.name() == 'ENG'} ? 'pebble-eng' :
-                        ${course.colorKey.name() == 'PHIL'} ? 'pebble-phil' :
-                        'pebble-other'
-                      )"></span>
+                      th:classappend="${course.colorKey.name() == 'PHYSICS' and course.colorVariant.name() == 'DEEP' ? 'pebble-phys2' : (course.colorKey.name() == 'PHYSICS' ? 'pebble-phys' : (course.colorKey.name() == 'CS' ? 'pebble-cs' : (course.colorKey.name() == 'ENG' ? 'pebble-eng' : (course.colorKey.name() == 'PHIL' ? 'pebble-phil' : 'pebble-other'))))}"></span>
                 <span class="space-code" th:text="${course.code}">PHYS 211</span>
             </li>
         </ul>
