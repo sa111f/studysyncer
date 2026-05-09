@@ -1,9 +1,233 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org"
-      th:replace="~{layouts/base :: layout(content=~{::content})}">
-<body>
-<th:block th:fragment="content">
-    <h1>Tracker</h1>
-</th:block>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head :: head}"></head>
+<body class="page-tracker">
+
+<div class="shell">
+
+    <th:block th:replace="~{fragments/sidebar :: sidebar}"></th:block>
+
+    <main class="canvas">
+
+        <div class="main">
+
+            <svg width="0" height="0" style="position:absolute;">
+                <defs>
+                    <linearGradient id="goalGrad" x1="0" x2="1" y1="0" y2="1">
+                        <stop offset="0%" stop-color="#6db58c"/>
+                        <stop offset="100%" stop-color="#a98ed4"/>
+                    </linearGradient>
+                </defs>
+            </svg>
+
+            <div class="topbar">
+                <div class="crumb">
+                    <b>Tracker</b>
+                    <span class="sep">·</span>
+                    <span th:text="'Week of ' + ${tracker.weekRangeLabel}">Week of May 4 – 10, 2026</span>
+                </div>
+                <div class="right">
+                    <button class="new-btn" type="button" disabled title="Coming soon">
+                        <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"></path></svg>
+                        Log session
+                        <span class="kbd">L</span>
+                        <span class="soon">soon</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="page-head">
+                <div class="page-eyebrow" th:text="${tracker.pageEyebrow}">Tuesday · Week 12</div>
+                <h1 class="page-title">Tracker <span class="em">— hours, well spent.</span></h1>
+                <p class="page-sub" th:text="${tracker.pageSubtitle}">15 hours this week, mostly Quantum and Discrete. Five-day streak running.</p>
+            </div>
+
+            <div class="range">
+                <div class="seg">
+                    <button class="seg-btn" type="button" disabled title="Coming soon">Day</button>
+                    <button class="seg-btn active" type="button">Week</button>
+                    <button class="seg-btn" type="button" disabled title="Coming soon">Month</button>
+                    <button class="seg-btn" type="button" disabled title="Coming soon">Year</button>
+                </div>
+                <div class="right">
+                    <button class="nav-btn" type="button" disabled title="Coming soon">‹</button>
+                    <span th:text="${tracker.weekRangeLabel}">May 4 – 10, 2026</span>
+                    <button class="nav-btn" type="button" disabled title="Coming soon">›</button>
+                </div>
+            </div>
+
+            <div class="summary">
+                <div class="total">
+                    <div class="l">Total this week</div>
+                    <div class="big">
+                        <span th:text="${fmt.hoursPart(tracker.summary.totalMinutes)}">15</span><span class="u">h</span>
+                        <span th:text="${fmt.minutesPart(tracker.summary.totalMinutes)}">12</span><span class="u">m</span>
+                    </div>
+                    <div class="delta" th:text="${tracker.summary.deltaLabel}">+ 3h 40m over last week's pace.</div>
+                </div>
+                <div class="summary-stats">
+                    <div class="ssat">
+                        <div class="l">Daily avg</div>
+                        <div class="v">
+                            <span th:text="${fmt.hoursPart(tracker.summary.dailyAvgMinutes)}">2</span><span class="u">h</span>
+                            <span th:text="${fmt.minutesPart(tracker.summary.dailyAvgMinutes)}">10</span><span class="u">m</span>
+                        </div>
+                        <div class="s" th:text="${tracker.summary.dailyAvgTarget}">target 2h 30m</div>
+                    </div>
+                    <div class="ssat">
+                        <div class="l">Sessions</div>
+                        <div class="v" th:text="${tracker.summary.sessionsCount}">19</div>
+                        <div class="s" th:text="${tracker.summary.sessionsAvgLabel}">avg 48 min</div>
+                    </div>
+                    <div class="ssat">
+                        <div class="l">Pomodoros</div>
+                        <div class="v" th:text="${tracker.summary.pomodorosCount}">28</div>
+                        <div class="s" th:text="${tracker.summary.pomodorosCompletionLabel}">~93% completion</div>
+                    </div>
+                    <div class="ssat">
+                        <div class="l">Streak</div>
+                        <div class="v">
+                            <span th:text="${tracker.summary.streakDays}">5</span><span class="u">d</span>
+                        </div>
+                        <div class="s" th:text="${tracker.summary.streakBestLabel}">best · 12 days</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="week-card">
+                <div class="wc-head">
+                    <div class="h">Hours by day <span class="em">— stacked by course</span></div>
+                    <div class="legend">
+                        <th:block th:each="cb : ${tracker.byCourse}" th:if="${cb.weekMinutes > 0}">
+                            <span>
+                                <i th:style="'background:' + ${cb.fillGradient}"></i>
+                                <span th:text="${cb.course.code}">PHYS 311</span>
+                            </span>
+                        </th:block>
+                    </div>
+                </div>
+                <div class="chart">
+                    <div class="y-axis">
+                        <span th:each="lab : ${tracker.chart.yAxisLabels}" th:text="${lab}">4h</span>
+                    </div>
+                    <div class="bars-area">
+                        <div th:each="day : ${tracker.chart.days}"
+                             th:class="'bar-stack' + (${day.isToday} ? ' today' : '')">
+                            <div class="bar-tooltip" th:text="${day.tooltipLabel}">Tue · today · 2h 12m so far</div>
+                            <div th:each="seg : ${day.segments}"
+                                 th:class="'bar-seg ' + ${seg.courseClass}"
+                                 th:style="'height:' + ${seg.heightPercent} + '%;'"></div>
+                        </div>
+                    </div>
+                    <div class="x-axis">
+                        <div th:each="day : ${tracker.chart.days}"
+                             th:class="'x-label' + (${day.isToday} ? ' today' : '')">
+                            <div class="d" th:text="${day.shortDay}">Tue</div>
+                            <div class="num" th:text="${day.dateNum}">May 6</div>
+                            <div class="total" th:text="${day.totalLabel}">2h 12m</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <section class="sect" th:if="${!tracker.recentSessions.isEmpty()}">
+                <div class="sect-head">
+                    <h2>Recent sessions <span class="em">— this week</span></h2>
+                    <span class="count" th:text="${tracker.summary.sessionsCount}">19</span>
+                    <span class="more">View all</span>
+                </div>
+                <div class="sessions">
+                    <div class="sess" th:each="rs : ${tracker.recentSessions}">
+                        <div class="when">
+                            <b th:text="${rs.whenWeekday}">Today</b><span th:text="${rs.whenTime}">2:00 PM</span>
+                        </div>
+                        <div class="body">
+                            <span class="t">
+                                <span th:text="${rs.title}">Problem set 3</span><th:block th:if="${rs.italicSuffix != null}"> — <em th:text="${rs.italicSuffix}">recursion</em></th:block>
+                            </span>
+                            <span th:class="'pill ' + ${rs.pillClass}">
+                                <span class="dot"></span><span th:text="${rs.courseCode}">CS 232</span>
+                            </span>
+                        </div>
+                        <div class="pomos">
+                            <span class="pomo f" th:each="i : ${#numbers.sequence(1, rs.pomoCount)}"></span>
+                        </div>
+                        <div class="dur" th:text="${rs.durationLabel}">1h 12m</div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <aside class="rail">
+
+            <div class="rail-section">
+                <div class="label">Streak</div>
+                <div class="streak">
+                    <div class="streak-row">
+                        <div class="flame" th:text="${tracker.streak.days}">5</div>
+                        <div>
+                            <div class="h">
+                                <span th:text="${tracker.streak.days}">5</span><span class="u" th:text="${tracker.streak.days == 1} ? ' day' : ' days'"> days</span>
+                            </div>
+                            <div class="s" th:text="${tracker.streak.bestLabel}">best · 12 days</div>
+                        </div>
+                    </div>
+                    <div class="streak-dots">
+                        <div th:each="dot : ${tracker.streak.dots}"
+                             th:class="'sd' + (${dot.stateClass != ''} ? ' ' + ${dot.stateClass} : '')"></div>
+                    </div>
+                    <div class="streak-labels">
+                        <span th:each="dot : ${tracker.streak.dots}" th:text="${dot.label}">M</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rail-section">
+                <div class="label">Today's goal</div>
+                <div class="goal">
+                    <div class="goal-row">
+                        <div class="donut">
+                            <svg viewBox="0 0 100 100">
+                                <circle class="t" cx="50" cy="50" r="42"/>
+                                <circle class="p" cx="50" cy="50" r="42" stroke-dasharray="264"
+                                        th:attr="stroke-dashoffset=${tracker.goal.dashOffset}"/>
+                            </svg>
+                            <div class="cap" th:text="${tracker.goal.percent} + '%'">35%</div>
+                        </div>
+                        <div>
+                            <div class="h" th:text="${tracker.goal.hoursLabel}">52 of 150 min</div>
+                            <div class="s" th:text="${tracker.goal.stateLine}">~98m to go · 5d streak</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rail-section" th:if="${!tracker.byCourse.isEmpty()}">
+                <div class="label">By course <span class="more" th:text="${tracker.summary.totalHoursLabel}">15h 12m</span></div>
+                <div class="breakdown">
+                    <div class="br-row" th:each="cb : ${tracker.byCourse}">
+                        <span class="name" th:text="${cb.course.code}">CS 232</span>
+                        <span class="amount" th:text="${cb.hoursLabel}">2h 10m</span>
+                        <div class="bar"><div class="fill"
+                                                th:style="'width:' + ${cb.percent} + '%; background:' + ${cb.fillGradient}"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rail-section">
+                <div class="label">Insight</div>
+                <div class="best">
+                    <div class="l1">Best time</div>
+                    <p class="body" th:utext="${tracker.bestTimeInsight}">You're most focused between <b>2 – 3 PM</b>. Schedule deep work then.</p>
+                </div>
+            </div>
+
+        </aside>
+
+    </main>
+
+</div>
+
 </body>
 </html>

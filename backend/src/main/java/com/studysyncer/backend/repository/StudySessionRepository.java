@@ -15,7 +15,12 @@ public interface StudySessionRepository extends JpaRepository<StudySession, Long
     List<StudySession> findByUserAndStartedAtBetween(User user, Instant start, Instant end);
 
     @EntityGraph(attributePaths = "course")
+    List<StudySession> findByUserAndStartedAtBetweenOrderByStartedAtDesc(User user, Instant start, Instant end);
+
+    @EntityGraph(attributePaths = "course")
     Optional<StudySession> findFirstByUserAndEndedAtIsNullOrderByStartedAtDesc(User user);
+
+    long countByUser(User user);
 
     void deleteByUser(User user);
 }

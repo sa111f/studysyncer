@@ -208,19 +208,70 @@ public class DemoSeeder {
                 today.minusDays(36).with(LocalTime.of(15, 0)).toInstant(),
                 60, "Library Hall", ExamStatus.PAST, "A", nowInstant);
 
-        // Study sessions — completed history this week (drives streak + week-stat + 52m today)
-        saveSession(user, courses.get("PHYS 311"), "Quantum review",       "Ch. 1",
-                today.minusDays(4).with(LocalTime.of(10, 0)).toInstant(), 45 * 60);
-        saveSession(user, courses.get("CS 232"),   "Problem set 2",        null,
-                today.minusDays(3).with(LocalTime.of(19, 0)).toInstant(), 60 * 60);
-        saveSession(user, courses.get("PHIL 240"), "Reading",              "Foucault Ch. 1",
-                today.minusDays(2).with(LocalTime.of(15, 0)).toInstant(), 25 * 60);
-        saveSession(user, courses.get("PHYS 211"), "Lab 2 setup",          null,
-                today.minusDays(2).with(LocalTime.of(20, 0)).toInstant(), 90 * 60);
-        saveSession(user, courses.get("CS 232"),   "Algorithm exercises",  null,
-                today.minusDays(1).with(LocalTime.of(11, 0)).toInstant(), 50 * 60);
-        saveSession(user, courses.get("CS 232"),   "Problem set 3",        "recursion",
-                today.with(LocalTime.of(14, 0)).toInstant(),               52 * 60);
+        // Study sessions — full Sun..today coverage of current week (Sunday-first grid).
+        // Tracker page bar chart needs at least one session per past weekday; this also drives
+        // the streak, daily/week totals, recent-session list, and peak-hour insight.
+        Course phys211 = courses.get("PHYS 211");
+        Course phys311 = courses.get("PHYS 311");
+        Course cs232   = courses.get("CS 232");
+        Course eng102  = courses.get("ENG 102");
+        Course phil240 = courses.get("PHIL 240");
+
+        // Sunday at or before today (Sun=last day of ISO week → 0 days back when today is Sun).
+        int dow = now.getDayOfWeek().getValue(); // Mon=1..Sun=7
+        int daysBackToSunday = (dow == 7) ? 0 : dow;
+        ZonedDateTime sun = today.minusDays(daysBackToSunday);
+        ZonedDateTime mondayDay = sun.plusDays(1);
+        ZonedDateTime tueDay   = sun.plusDays(2);
+        ZonedDateTime wedDay   = sun.plusDays(3);
+        ZonedDateTime thuDay   = sun.plusDays(4);
+        ZonedDateTime friDay   = sun.plusDays(5);
+        ZonedDateTime satDay   = sun.plusDays(6);
+        java.time.LocalDate todayDate = today.toLocalDate();
+
+        // Sunday
+        if (!sun.toLocalDate().isAfter(todayDate) && !sun.toLocalDate().isEqual(todayDate)) {
+            saveSession(user, phil240, "Reading review",   "Plato",   sun.with(LocalTime.of(18, 20)).toInstant(), 25 * 60);
+            saveSession(user, cs232,   "Lecture catch-up", null,      sun.with(LocalTime.of(20,  0)).toInstant(), 60 * 60);
+        }
+        // Monday
+        if (!mondayDay.toLocalDate().isAfter(todayDate) && !mondayDay.toLocalDate().isEqual(todayDate)) {
+            saveSession(user, phil240, "Reading",            "Foucault Ch. 1", mondayDay.with(LocalTime.of(15, 40)).toInstant(), 25 * 60);
+            saveSession(user, eng102,  "Outline brainstorm", null,             mondayDay.with(LocalTime.of(17,  0)).toInstant(), 35 * 60);
+            saveSession(user, cs232,   "Algorithm exercises", null,            mondayDay.with(LocalTime.of(11,  0)).toInstant(), 50 * 60);
+            saveSession(user, phys211, "Lab 2 setup",        null,             mondayDay.with(LocalTime.of(20, 15)).toInstant(), 90 * 60);
+        }
+        // Tuesday
+        if (!tueDay.toLocalDate().isAfter(todayDate) && !tueDay.toLocalDate().isEqual(todayDate)) {
+            saveSession(user, cs232,   "Problem set 3",  "recursion", tueDay.with(LocalTime.of(14, 0)).toInstant(), 72 * 60);
+            saveSession(user, phys311, "Quantum review", "Ch. 2",     tueDay.with(LocalTime.of( 9, 30)).toInstant(), 60 * 60);
+        }
+        // Wednesday
+        if (!wedDay.toLocalDate().isAfter(todayDate) && !wedDay.toLocalDate().isEqual(todayDate)) {
+            saveSession(user, phil240, "Discussion prep",     null,    wedDay.with(LocalTime.of(13,  0)).toInstant(),  45 * 60);
+            saveSession(user, cs232,   "Office hours notes",  null,    wedDay.with(LocalTime.of(15, 30)).toInstant(),  30 * 60);
+            saveSession(user, phys311, "Quantum problems",    "Ch. 3", wedDay.with(LocalTime.of(20,  0)).toInstant(), 120 * 60);
+        }
+        // Thursday
+        if (!thuDay.toLocalDate().isAfter(todayDate) && !thuDay.toLocalDate().isEqual(todayDate)) {
+            saveSession(user, eng102,  "Draft writing",  null,    thuDay.with(LocalTime.of(10, 0)).toInstant(), 30 * 60);
+            saveSession(user, phys311, "Quantum review", "Ch. 1", thuDay.with(LocalTime.of(19, 0)).toInstant(), 80 * 60);
+        }
+        // Friday
+        if (!friDay.toLocalDate().isAfter(todayDate) && !friDay.toLocalDate().isEqual(todayDate)) {
+            saveSession(user, cs232,   "Group meeting prep", null,    friDay.with(LocalTime.of(11, 0)).toInstant(), 60 * 60);
+            saveSession(user, phys311, "Quantum problems",   "Ch. 4", friDay.with(LocalTime.of(16, 0)).toInstant(), 90 * 60);
+        }
+        // Saturday
+        if (!satDay.toLocalDate().isAfter(todayDate) && !satDay.toLocalDate().isEqual(todayDate)) {
+            saveSession(user, phil240, "Foucault notes", null, satDay.with(LocalTime.of(14, 0)).toInstant(), 35 * 60);
+        }
+
+        // Today — keep a guaranteed afternoon CS session (drives "52m today" and recent list "Today")
+        saveSession(user, cs232,   "Problem set 3",  "recursion", today.with(LocalTime.of(14,  0)).toInstant(), 52 * 60);
+        if (now.getHour() >= 12) {
+            saveSession(user, phys311, "Quantum review", "intro",  today.with(LocalTime.of( 9, 30)).toInstant(), 60 * 60);
+        }
     }
 
     private Course saveCourse(User user, String code, String name, ColorKey ck, ColorVariant cv, int order) {

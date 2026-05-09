@@ -93,6 +93,14 @@ public class Formatters {
         return 264 - (264 * p / 100);
     }
 
+    public int hoursPart(int totalMinutes) {
+        return Math.max(0, totalMinutes) / 60;
+    }
+
+    public int minutesPart(int totalMinutes) {
+        return Math.max(0, totalMinutes) % 60;
+    }
+
     public String fmtEstimate(Integer minutes) {
         if (minutes == null || minutes <= 0) {
             return "";
