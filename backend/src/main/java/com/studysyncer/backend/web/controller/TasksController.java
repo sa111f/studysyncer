@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
 import java.util.Set;
 
 @Controller
@@ -34,6 +35,8 @@ public class TasksController {
         String safe = VALID_FILTERS.contains(filter) ? filter : "all";
         model.addAttribute("tasks", tasksService.buildFor(user, safe));
         model.addAttribute("pageTitle", "Tasks · StudySyncer");
+        model.addAttribute("extraCss", List.of("/css/modal.css"));
+        model.addAttribute("extraJs", List.of("/js/modal.js", "/js/tasks.js"));
         return "tasks";
     }
 

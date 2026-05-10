@@ -13,6 +13,9 @@
     <th:block th:if="${extraCss != null}" th:each="css : ${extraCss}">
         <link rel="stylesheet" th:href="@{${css}}"/>
     </th:block>
+    <th:block th:if="${extraJs != null}" th:each="js : ${extraJs}">
+        <script th:src="@{${js}}" defer></script>
+    </th:block>
 </head>
 <body></body>
 </html>

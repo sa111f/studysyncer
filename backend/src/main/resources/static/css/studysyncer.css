@@ -1339,6 +1339,24 @@ button.check {
 }
 .page-exams .invest-row .bar .fill { height: 100%; border-radius: 999px; }
 
+.page-exams .card-menu {
+  margin-left: auto;
+  width: 24px; height: 24px;
+  display: grid; place-items: center;
+  border-radius: 6px;
+  color: var(--ink-3);
+  opacity: 0;
+  transition: opacity 120ms, background 120ms, color 120ms;
+  font-size: 14px; line-height: 1;
+}
+.page-exams .exam-card:hover .card-menu,
+.page-exams .hero:hover .card-menu,
+.page-exams .past-row:hover .card-menu { opacity: 1; }
+.page-exams .card-menu:hover { background: var(--hover); color: var(--ink); }
+
+.page-exams .topic { cursor: pointer; }
+.page-exams .topic .topic-name { pointer-events: none; }
+
 /* ---------- Tracker page (scoped under .page-tracker) ---------- */
 
 /* Range tabs */

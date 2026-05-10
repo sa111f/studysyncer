@@ -46,7 +46,7 @@ public record ExamsView(
             int dashOffset
     ) {}
 
-    public record TopicChip(String name, String statusClass) {}
+    public record TopicChip(Long id, String name, String statusClass, String statusName) {}
 
     public record PastEntry(
             Exam exam,

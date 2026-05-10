@@ -9,6 +9,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
 import java.util.Set;
 
 @Controller
@@ -32,6 +33,8 @@ public class ExamsController {
         String safe = VALID_FILTERS.contains(filter) ? filter : "upcoming";
         model.addAttribute("exams", examsService.buildFor(user, safe));
         model.addAttribute("pageTitle", "Exams · StudySyncer");
+        model.addAttribute("extraCss", List.of("/css/modal.css"));
+        model.addAttribute("extraJs", List.of("/js/modal.js", "/js/exams.js"));
         return "exams";
     }
 }

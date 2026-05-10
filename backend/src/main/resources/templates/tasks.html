@@ -25,11 +25,10 @@
                         Add with AI
                         <span class="soon">soon</span>
                     </button>
-                    <button class="new-btn" type="button" disabled title="Coming soon">
+                    <button class="new-btn" type="button" data-action="task-new">
                         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"></path></svg>
                         New task
                         <span class="kbd">N</span>
-                        <span class="soon">soon</span>
                     </button>
                 </div>
             </div>
@@ -78,6 +77,11 @@
                         <span class="em" th:if="${g.headingItalic() != null}" th:text="' ' + ${g.headingItalic()}"></span>
                     </h2>
                     <span class="count" th:text="${g.tasks().size()}">3</span>
+                    <button class="add" type="button"
+                            th:if="${g.heading() != 'Completed' and g.heading() != 'Completed today'}"
+                            th:attr="data-section=${g.heading()}"
+                            data-action="task-new"
+                            title="Add to this section">+</button>
                 </div>
 
                 <div th:each="t : ${g.tasks()}"
@@ -111,7 +115,16 @@
                     <div th:class="'due' + (${g.cssExtra() == 'alert'} ? ' overdue' : (${fmt.isSoon(t.dueAt)} ? ' soon' : ''))"
                          th:text="${fmt.fmtTaskDueLabel(t.dueAt, g.cssExtra() == 'alert', t.completedAt)}">9 PM</div>
 
-                    <div class="row-action">⋯</div>
+                    <button class="row-action" type="button"
+                            th:attr="data-action='task-menu',
+                                     data-task-id=${t.id},
+                                     data-task-title=${t.title},
+                                     data-task-italic=${t.italicSuffix},
+                                     data-task-course-id=${t.course != null ? t.course.id : ''},
+                                     data-task-due=${t.dueAt != null ? T(java.time.LocalDateTime).ofInstant(t.dueAt, T(java.time.ZoneId).systemDefault()).toString() : ''},
+                                     data-task-estimate=${t.estimatedMinutes},
+                                     data-task-priority=${t.priority != null ? t.priority.name() : ''},
+                                     data-task-tags=${t.tags != null ? #strings.listJoin(t.tags.![name], ',') : ''}">⋯</button>
                 </div>
             </section>
 
@@ -176,6 +189,94 @@
 
     </main>
 
+</div>
+
+<div class="row-menu" id="taskRowMenu">
+    <button data-menu-action="edit" type="button">✎ Edit</button>
+    <button data-menu-action="duplicate" type="button" disabled title="Coming soon">⎘ Duplicate <span class="soon">soon</span></button>
+    <hr/>
+    <button data-menu-action="delete" type="button" class="danger">🗑 Delete</button>
+</div>
+
+<div class="modal-backdrop" id="taskModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+        <div class="modal-head">
+            <h2 class="title" id="taskModalTitle">New task</h2>
+            <button class="close" data-modal-close type="button" aria-label="Close">×</button>
+        </div>
+
+        <form id="taskForm" autocomplete="off">
+            <div class="modal-body">
+                <div class="form-error-banner"></div>
+
+                <div class="field" data-field="title">
+                    <label for="taskTitleInput">Title</label>
+                    <input id="taskTitleInput" name="title" type="text" required maxlength="200" placeholder="What needs to happen?"/>
+                    <span class="err"></span>
+                </div>
+
+                <div class="field" data-field="italicSuffix">
+                    <label for="taskItalicInput">Italic note (optional)</label>
+                    <input id="taskItalicInput" name="italicSuffix" type="text" maxlength="200" placeholder="e.g. Equilibrium"/>
+                    <span class="err"></span>
+                    <span class="hint">Renders in italics after the title — used for chapter, topic, or context.</span>
+                </div>
+
+                <div class="field" data-field="courseId">
+                    <label>Course</label>
+                    <input type="hidden" name="courseId"/>
+                    <div class="course-picker" data-target="courseId">
+                        <button type="button" class="course-pick" th:each="c, cIterStat : ${sidebarCourses}"
+                                th:attr="data-course-id=${c.id}"
+                                th:classappend="${cIterStat.first} ? 'selected' : ''">
+                            <span class="dot" th:style="'background: ' + ${fmt.dotGradient(c)} + ';'"></span>
+                            <span th:text="${c.code}"></span>
+                        </button>
+                    </div>
+                    <span class="err"></span>
+                </div>
+
+                <div class="field-row cols-2">
+                    <div class="field" data-field="dueAtLocal">
+                        <label for="taskDueInput">Due</label>
+                        <input id="taskDueInput" name="dueAtLocal" type="datetime-local"/>
+                        <span class="err"></span>
+                    </div>
+                    <div class="field" data-field="estimatedMinutes">
+                        <label for="taskEstInput">Estimate (min)</label>
+                        <input id="taskEstInput" name="estimatedMinutes" type="number" min="1" max="600" placeholder="45"/>
+                        <span class="err"></span>
+                    </div>
+                </div>
+
+                <div class="field" data-field="priority">
+                    <label>Priority</label>
+                    <select name="priority">
+                        <option value="LOW">Low</option>
+                        <option value="NORMAL" selected>Normal</option>
+                        <option value="HIGH">High (shows ! marker)</option>
+                    </select>
+                </div>
+
+                <div class="field" data-field="tags">
+                    <label>Tags</label>
+                    <input type="hidden" name="tags"/>
+                    <div class="tag-chips" data-target="tags">
+                        <input type="text" class="tag-input" placeholder="Type tag, press Enter"/>
+                    </div>
+                    <span class="hint">Use tags to group related tasks across courses.</span>
+                </div>
+            </div>
+
+            <div class="modal-foot">
+                <button type="button" class="btn-ghost" data-modal-close>Cancel</button>
+                <span class="spacer"></span>
+                <button type="submit" class="btn-primary"
+                        data-submit-label-create="Create task"
+                        data-submit-label-update="Save changes">Create task</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 </body>

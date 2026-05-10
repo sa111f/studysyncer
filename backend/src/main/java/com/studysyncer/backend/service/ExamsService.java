@@ -11,10 +11,16 @@ import com.studysyncer.backend.repository.CourseRepository;
 import com.studysyncer.backend.repository.ExamRepository;
 import com.studysyncer.backend.repository.ExamTopicRepository;
 import com.studysyncer.backend.repository.StudySessionRepository;
+import com.studysyncer.backend.web.api.dto.ExamCreateRequest;
+import com.studysyncer.backend.web.api.dto.TopicUpdateRequest;
+import com.studysyncer.backend.web.util.Inputs;
 import com.studysyncer.backend.web.view.ExamsView;
 import com.studysyncer.backend.web.view.Formatters;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.studysyncer.backend.domain.ExamType;
 
 import java.time.DayOfWeek;
 import java.time.Instant;
@@ -26,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -33,6 +40,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ExamsService {
@@ -129,6 +138,143 @@ public class ExamsService {
         );
     }
 
+    @Transactional
+    public Exam createExam(User user, ExamCreateRequest req) {
+        Course course = courseRepository.findById(req.getCourseId())
+                .filter(c -> c.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new IllegalArgumentException("Course not found or not yours"));
+
+        Exam ex = new Exam();
+        ex.setUser(user);
+        ex.setCourse(course);
+        ex.setTitle(req.getTitle().trim());
+        ex.setExamType(req.getExamType() != null ? req.getExamType() : ExamType.MIDTERM);
+        ex.setStartsAt(Inputs.parseLocalDateTime(req.getStartsAtLocal()));
+        ex.setDurationMinutes(req.getDurationMinutes() != null ? req.getDurationMinutes() : 0);
+        ex.setLocation(Inputs.blankToNull(req.getLocation()) != null ? req.getLocation().trim() : "");
+        ex.setStatus(req.getStatus() != null ? req.getStatus() : ExamStatus.UPCOMING);
+        ex.setGrade(ex.getStatus() == ExamStatus.PAST ? Inputs.blankToNull(req.getGrade()) : null);
+        ex.setCreatedAt(Instant.now());
+        ex = examRepository.save(ex);
+        replaceTopics(ex, req.getTopics());
+        return ex;
+    }
+
+    @Transactional
+    public Exam updateExam(User user, Long id, ExamCreateRequest req) {
+        Exam ex = examRepository.findById(id)
+                .filter(x -> x.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new AccessDeniedException("Not your exam"));
+        Course course = courseRepository.findById(req.getCourseId())
+                .filter(c -> c.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new IllegalArgumentException("Course not found or not yours"));
+
+        ex.setCourse(course);
+        ex.setTitle(req.getTitle().trim());
+        ex.setExamType(req.getExamType() != null ? req.getExamType() : ex.getExamType());
+        ex.setStartsAt(Inputs.parseLocalDateTime(req.getStartsAtLocal()));
+        ex.setDurationMinutes(req.getDurationMinutes() != null ? req.getDurationMinutes() : 0);
+        ex.setLocation(Inputs.blankToNull(req.getLocation()) != null ? req.getLocation().trim() : "");
+        ex.setStatus(req.getStatus() != null ? req.getStatus() : ex.getStatus());
+        ex.setGrade(ex.getStatus() == ExamStatus.PAST ? Inputs.blankToNull(req.getGrade()) : null);
+        examRepository.save(ex);
+        if (req.getTopics() != null) {
+            replaceTopics(ex, req.getTopics());
+        }
+        return ex;
+    }
+
+    @Transactional
+    public void deleteExam(User user, Long id) {
+        Exam ex = examRepository.findById(id)
+                .filter(x -> x.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new AccessDeniedException("Not your exam"));
+        examRepository.delete(ex);
+    }
+
+    @Transactional
+    public ExamTopic addTopic(User user, Long examId, String name) {
+        Exam ex = examRepository.findById(examId)
+                .filter(x -> x.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new AccessDeniedException("Not your exam"));
+        String trimmed = name == null ? "" : name.trim();
+        if (trimmed.isEmpty()) throw new IllegalArgumentException("Topic name required");
+        if (trimmed.length() > 100) trimmed = trimmed.substring(0, 100);
+        int nextOrder = examTopicRepository.findByExamOrderByDisplayOrderAsc(ex).size();
+        ExamTopic t = new ExamTopic();
+        t.setExam(ex);
+        t.setName(trimmed);
+        t.setStatus(TopicStatus.NEUTRAL);
+        t.setDisplayOrder(nextOrder);
+        return examTopicRepository.save(t);
+    }
+
+    @Transactional
+    public ExamTopic updateTopic(User user, Long topicId, TopicUpdateRequest req) {
+        ExamTopic t = examTopicRepository.findById(topicId)
+                .filter(x -> x.getExam().getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new AccessDeniedException("Not your topic"));
+        if (req.getStatus() != null) t.setStatus(req.getStatus());
+        if (req.getName() != null && !req.getName().isBlank()) {
+            String n = req.getName().trim();
+            t.setName(n.length() > 100 ? n.substring(0, 100) : n);
+        }
+        return examTopicRepository.save(t);
+    }
+
+    @Transactional
+    public void deleteTopic(User user, Long topicId) {
+        ExamTopic t = examTopicRepository.findById(topicId)
+                .filter(x -> x.getExam().getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new AccessDeniedException("Not your topic"));
+        examTopicRepository.delete(t);
+    }
+
+    /** Replace ALL topics on an exam from a comma-separated name list, preserving status when name matches. */
+    private void replaceTopics(Exam ex, String csv) {
+        List<ExamTopic> existing = examTopicRepository.findByExamOrderByDisplayOrderAsc(ex);
+        Map<String, ExamTopic> byName = existing.stream()
+                .collect(Collectors.toMap(
+                        t -> t.getName().toLowerCase(Locale.ROOT),
+                        t -> t,
+                        (a, b) -> a,
+                        LinkedHashMap::new));
+
+        List<String> wanted = (csv == null || csv.isBlank())
+                ? List.of()
+                : Arrays.stream(csv.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(s -> s.length() > 100 ? s.substring(0, 100) : s)
+                .toList();
+
+        Set<String> wantedKeys = wanted.stream()
+                .map(s -> s.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toSet());
+
+        for (ExamTopic t : existing) {
+            if (!wantedKeys.contains(t.getName().toLowerCase(Locale.ROOT))) {
+                examTopicRepository.delete(t);
+            }
+        }
+
+        int order = 0;
+        for (String name : wanted) {
+            String key = name.toLowerCase(Locale.ROOT);
+            ExamTopic t = byName.get(key);
+            if (t == null) {
+                t = new ExamTopic();
+                t.setExam(ex);
+                t.setName(name);
+                t.setStatus(TopicStatus.NEUTRAL);
+            } else {
+                t.setName(name);
+            }
+            t.setDisplayOrder(order++);
+            examTopicRepository.save(t);
+        }
+    }
+
     private ExamsView.HeroExam buildHero(Exam exam, List<ExamTopic> topics, LocalDate today, ZoneId tz) {
         long days = ChronoUnit.DAYS.between(today, exam.getStartsAt().atZone(tz).toLocalDate());
         int percent = readinessPercent(topics);
@@ -181,7 +327,7 @@ public class ExamsService {
                     case WEAK    -> "weak";
                     case NEUTRAL -> "";
                 };
-                chips.add(new ExamsView.TopicChip(t.getName(), klass));
+                chips.add(new ExamsView.TopicChip(t.getId(), t.getName(), klass, t.getStatus().name()));
             }
         }
 

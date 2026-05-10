@@ -1,0 +1,232 @@
+/* ── Modal: backdrop + card ── */
+.modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(42, 34, 26, 0.4);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center; justify-content: center;
+  z-index: 1000;
+  animation: backdrop-in 180ms ease-out;
+}
+.modal-backdrop.open { display: flex; }
+@keyframes backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+  background: var(--surface);
+  border-radius: 16px;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 64px);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 28px 64px -28px rgba(60,45,25,0.45), 0 4px 12px rgba(60,45,25,0.08);
+  animation: modal-in 220ms cubic-bezier(0.32, 0.72, 0.24, 1);
+}
+@keyframes modal-in {
+  from { transform: translateY(8px) scale(0.98); opacity: 0; }
+  to   { transform: translateY(0) scale(1);     opacity: 1; }
+}
+
+.modal-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 22px 28px 16px;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.modal-head .eyebrow {
+  flex: 1;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--ink-3);
+}
+.modal-head .title {
+  flex: 1;
+  font-family: var(--serif); font-size: 22px; font-weight: 500;
+  letter-spacing: -0.015em; color: var(--ink); margin: 0;
+}
+.modal-head .close {
+  width: 30px; height: 30px;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  color: var(--ink-3);
+  transition: background 120ms;
+}
+.modal-head .close:hover { background: var(--hover); color: var(--ink); }
+
+.modal-body {
+  padding: 22px 28px;
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.modal-foot {
+  padding: 16px 28px 22px;
+  border-top: 1px solid var(--rule-soft);
+  display: flex; align-items: center; gap: 8px;
+}
+.modal-foot .spacer { flex: 1; }
+.modal-foot .danger { color: #8a2a1d; padding: 8px 12px; border-radius: 8px; font-size: 12.5px; }
+.modal-foot .danger:hover { background: rgba(255,141,107,0.12); }
+
+/* ── Form fields shared by every modal ── */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-row { display: grid; gap: 12px; }
+.field-row.cols-2 { grid-template-columns: 1fr 1fr; }
+.field-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.field label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--ink-3);
+}
+.field input[type=text],
+.field input[type=email],
+.field input[type=password],
+.field input[type=number],
+.field input[type=date],
+.field input[type=time],
+.field input[type=datetime-local],
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--rule);
+  background: var(--surface-2);
+  font-family: var(--sans); font-size: 13.5px; color: var(--ink);
+  transition: border-color 120ms, box-shadow 120ms;
+}
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--ink-2);
+  box-shadow: 0 0 0 3px rgba(60,45,25,0.08);
+}
+.field textarea { min-height: 72px; resize: vertical; }
+.field .hint { font-size: 11.5px; color: var(--ink-3); }
+.field .err {
+  font-size: 11.5px; color: #8a2a1d;
+  display: none;
+}
+.field.has-error .err { display: block; }
+.field.has-error input,
+.field.has-error select,
+.field.has-error textarea {
+  border-color: #c44d3a;
+}
+
+/* ── Course picker pills (used in Task/Exam modals) ── */
+.course-picker { display: flex; flex-wrap: wrap; gap: 6px; }
+.course-pick {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  font-size: 12px; color: var(--ink-2);
+  cursor: pointer;
+  transition: background 120ms, border-color 120ms;
+}
+.course-pick:hover { background: var(--hover); }
+.course-pick.selected {
+  background: var(--ink); color: var(--surface); border-color: var(--ink);
+}
+.course-pick .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+}
+
+/* ── Tag chip input ── */
+.tag-chips { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; min-height: 38px; padding: 6px 8px; border-radius: 9px; border: 1px solid var(--rule); background: var(--surface-2); }
+.tag-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--bg-2);
+  color: var(--ink-2);
+  font-size: 11.5px;
+}
+.tag-chip::before { content: "#"; color: var(--ink-3); }
+.tag-chip .x {
+  margin-left: 2px; cursor: pointer; color: var(--ink-3);
+  font-size: 11px; line-height: 1;
+}
+.tag-chip .x:hover { color: var(--ink); }
+.tag-input {
+  flex: 1; min-width: 60px;
+  border: none; outline: none; background: none;
+  font-size: 12.5px; color: var(--ink); padding: 4px 2px;
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  background: var(--ink); color: var(--surface);
+  padding: 10px 18px; border-radius: 9px;
+  font-size: 13px; font-weight: 500;
+  transition: background 120ms;
+}
+.btn-primary:hover { background: #1a140e; }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-ghost {
+  color: var(--ink-2);
+  padding: 10px 14px; border-radius: 9px;
+  font-size: 13px; font-weight: 500;
+}
+.btn-ghost:hover { background: var(--hover); color: var(--ink); }
+
+/* ── Form-level error banner ── */
+.form-error-banner {
+  display: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255,141,107,0.18);
+  color: #7a2e15;
+  font-size: 12.5px;
+}
+.form-error-banner.show { display: block; }
+
+/* ── Row action menu (the ⋯ on task rows) ── */
+.row-menu {
+  position: fixed;
+  background: var(--surface-2);
+  border: 1px solid var(--rule-soft);
+  border-radius: 10px;
+  padding: 4px;
+  min-width: 140px;
+  box-shadow: 0 14px 32px -16px rgba(60,45,25,0.3), 0 2px 6px rgba(60,45,25,0.05);
+  z-index: 900;
+  display: none;
+}
+.row-menu.open { display: block; }
+.row-menu button {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--ink-2);
+  text-align: left;
+  transition: background 120ms;
+}
+.row-menu button:hover { background: var(--hover); color: var(--ink); }
+.row-menu button.danger { color: #8a2a1d; }
+.row-menu button.danger:hover { background: rgba(255,141,107,0.12); }
+.row-menu hr { margin: 4px 0; border: none; border-top: 1px solid var(--rule-soft); }
+
+/* ── Toast (post-action confirmation) ── */
+.toast-stack {
+  position: fixed; right: 16px; bottom: 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  z-index: 1100;
+  pointer-events: none;
+}
+.toast {
+  background: var(--ink); color: var(--surface);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 12.5px; font-weight: 500;
+  box-shadow: 0 12px 28px -12px rgba(0,0,0,0.4);
+  animation: toast-in 180ms ease-out;
+  pointer-events: auto;
+}
+.toast.error { background: #7a2e15; }
+.toast.success { background: #1f4a30; }
+@keyframes toast-in {
+  from { transform: translateY(8px); opacity: 0; }
+  to   { transform: translateY(0);  opacity: 1; }
+}

@@ -1,11 +1,16 @@
 package com.studysyncer.backend.service;
 
 import com.studysyncer.backend.domain.Course;
+import com.studysyncer.backend.domain.Priority;
+import com.studysyncer.backend.domain.Tag;
 import com.studysyncer.backend.domain.Task;
 import com.studysyncer.backend.domain.TaskStatus;
 import com.studysyncer.backend.domain.User;
 import com.studysyncer.backend.repository.CourseRepository;
+import com.studysyncer.backend.repository.TagRepository;
 import com.studysyncer.backend.repository.TaskRepository;
+import com.studysyncer.backend.web.api.dto.TaskCreateRequest;
+import com.studysyncer.backend.web.util.Inputs;
 import com.studysyncer.backend.web.view.Formatters;
 import com.studysyncer.backend.web.view.TasksView;
 import org.springframework.security.access.AccessDeniedException;
@@ -19,8 +24,10 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.WeekFields;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 @Service
 public class TasksService {
@@ -29,13 +36,16 @@ public class TasksService {
 
     private final TaskRepository taskRepository;
     private final CourseRepository courseRepository;
+    private final TagRepository tagRepository;
     private final Formatters formatters;
 
     public TasksService(TaskRepository taskRepository,
                         CourseRepository courseRepository,
+                        TagRepository tagRepository,
                         Formatters formatters) {
         this.taskRepository = taskRepository;
         this.courseRepository = courseRepository;
+        this.tagRepository = tagRepository;
         this.formatters = formatters;
     }
 
@@ -170,6 +180,75 @@ public class TasksService {
                 byCourse,
                 aiSuggestion
         );
+    }
+
+    @Transactional
+    public Task createTask(User user, TaskCreateRequest req) {
+        Course course = courseRepository.findById(req.getCourseId())
+                .filter(c -> c.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new IllegalArgumentException("Course not found or not yours"));
+
+        Task t = new Task();
+        t.setUser(user);
+        t.setCourse(course);
+        t.setTitle(req.getTitle().trim());
+        t.setItalicSuffix(Inputs.blankToNull(req.getItalicSuffix()));
+        t.setEstimatedMinutes(req.getEstimatedMinutes());
+        t.setPriority(req.getPriority() != null ? req.getPriority() : Priority.NORMAL);
+        t.setStatus(TaskStatus.PENDING);
+        t.setDueAt(Inputs.parseLocalDateTime(req.getDueAtLocal()));
+        t.setCreatedAt(Instant.now());
+        attachTagsByName(user, t, req.getTags());
+        return taskRepository.save(t);
+    }
+
+    @Transactional
+    public Task updateTask(User user, Long id, TaskCreateRequest req) {
+        Task t = taskRepository.findById(id)
+                .filter(x -> x.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new AccessDeniedException("Not your task"));
+        Course course = courseRepository.findById(req.getCourseId())
+                .filter(c -> c.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new IllegalArgumentException("Course not found or not yours"));
+
+        t.setCourse(course);
+        t.setTitle(req.getTitle().trim());
+        t.setItalicSuffix(Inputs.blankToNull(req.getItalicSuffix()));
+        t.setEstimatedMinutes(req.getEstimatedMinutes());
+        t.setPriority(req.getPriority() != null ? req.getPriority() : Priority.NORMAL);
+        t.setDueAt(Inputs.parseLocalDateTime(req.getDueAtLocal()));
+        attachTagsByName(user, t, req.getTags());
+        return taskRepository.save(t);
+    }
+
+    @Transactional
+    public void deleteTask(User user, Long id) {
+        Task t = taskRepository.findById(id)
+                .filter(x -> x.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new AccessDeniedException("Not your task"));
+        taskRepository.delete(t);
+    }
+
+    private void attachTagsByName(User user, Task t, String csv) {
+        Set<Tag> result = new LinkedHashSet<>();
+        if (csv != null && !csv.isBlank()) {
+            String[] names = csv.split(",");
+            for (String raw : names) {
+                String name = raw.trim().replaceAll("^#+", "");
+                if (name.isEmpty()) continue;
+                if (name.length() > 40) name = name.substring(0, 40);
+                final String finalName = name;
+                Tag tag = tagRepository.findByUserAndName(user, finalName)
+                        .orElseGet(() -> {
+                            Tag fresh = new Tag();
+                            fresh.setUser(user);
+                            fresh.setName(finalName);
+                            return tagRepository.save(fresh);
+                        });
+                result.add(tag);
+            }
+        }
+        t.setTags(result);
     }
 
     @Transactional

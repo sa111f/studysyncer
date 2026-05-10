@@ -196,6 +196,24 @@ public class Formatters {
         };
     }
 
+    public String dotGradient(Course course) {
+        if (course == null || course.getColorKey() == null) {
+            return "linear-gradient(135deg, var(--ink-faint), var(--ink-3))";
+        }
+        ColorKey key = course.getColorKey();
+        ColorVariant variant = course.getColorVariant();
+        if (key == ColorKey.PHYSICS && variant == ColorVariant.DEEP) {
+            return "linear-gradient(135deg, #c46442, #e89070)";
+        }
+        return switch (key) {
+            case PHYSICS -> "linear-gradient(135deg, var(--phys-a), var(--phys-b))";
+            case CS      -> "linear-gradient(135deg, var(--cs-a), var(--cs-b))";
+            case ENG     -> "linear-gradient(135deg, var(--eng-a), var(--eng-b))";
+            case PHIL    -> "linear-gradient(135deg, var(--phil-a), var(--phil-b))";
+            default      -> "linear-gradient(135deg, var(--ink-faint), var(--ink-3))";
+        };
+    }
+
     public String fillGradient(Course course) {
         if (course == null || course.getColorKey() == null) {
             return "linear-gradient(90deg, var(--ink-faint), var(--ink-3))";
