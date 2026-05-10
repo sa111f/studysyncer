@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="goalModal">
+    <div class="modal-backdrop" id="goalModalBackdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="goalModalTitle" style="width: min(380px, calc(100vw - 32px));">
+            <div class="modal-head">
+                <h2 class="title" id="goalModalTitle">Daily target</h2>
+                <button class="close" data-modal-close type="button" aria-label="Close">×</button>
+            </div>
+            <form id="goalForm" autocomplete="off">
+                <div class="modal-body">
+                    <div class="form-error-banner"></div>
+
+                    <div class="field" data-field="minutesPerDay">
+                        <label for="goalInput">Minutes per day</label>
+                        <input id="goalInput" name="minutesPerDay" type="number" min="5" max="600" required/>
+                        <span class="err"></span>
+                        <span class="hint">Most students land around 90–180 min. You can change this any time.</span>
+                    </div>
+
+                    <div class="goal-presets">
+                        <button type="button" class="preset-btn" data-preset="60">1h</button>
+                        <button type="button" class="preset-btn" data-preset="90">1.5h</button>
+                        <button type="button" class="preset-btn" data-preset="120">2h</button>
+                        <button type="button" class="preset-btn" data-preset="150">2.5h</button>
+                        <button type="button" class="preset-btn" data-preset="180">3h</button>
+                        <button type="button" class="preset-btn" data-preset="240">4h</button>
+                    </div>
+                </div>
+
+                <div class="modal-foot">
+                    <button type="button" class="btn-ghost" data-modal-close>Cancel</button>
+                    <span class="spacer"></span>
+                    <button type="submit" class="btn-primary">Save target</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

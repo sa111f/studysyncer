@@ -55,6 +55,9 @@ public record TrackerView(
     ) {}
 
     public record RecentSession(
+            Long id,
+            Long courseId,
+            Long taskId,
             String whenWeekday,
             String whenTime,
             String title,
@@ -62,7 +65,10 @@ public record TrackerView(
             String pillClass,
             String courseCode,
             int pomoCount,
-            String durationLabel
+            String durationLabel,
+            String startedAtLocal,
+            int durationMinutes,
+            String sessionType
     ) {}
 
     public record Streak(

@@ -8,6 +8,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.util.List;
+
 @Controller
 public class TodayController {
 
@@ -25,6 +27,7 @@ public class TodayController {
                 .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
         model.addAttribute("today", todayService.buildFor(user));
         model.addAttribute("pageTitle", "Today · StudySyncer");
+        model.addAttribute("extraJs", List.of("/js/today.js"));
         return "today";
     }
 }

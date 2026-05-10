@@ -141,7 +141,9 @@
                 <div class="label">Today's goal</div>
                 <div class="goal">
                     <div class="goal-row">
-                        <div class="donut">
+                        <div class="donut" data-action="goal-edit"
+                             th:attr="data-current=${today.dailyGoalMinutes}"
+                             title="Click to edit daily target" style="cursor: pointer;">
                             <svg viewBox="0 0 100 100">
                                 <defs>
                                     <linearGradient id="goalGrad" x1="0" x2="1" y1="0" y2="1">
@@ -234,6 +236,8 @@
     </main>
 
 </div>
+
+<th:block th:replace="~{fragments/goal-modal :: goalModal}"></th:block>
 
 </body>
 </html>

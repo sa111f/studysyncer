@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -216,6 +217,9 @@ public class TrackerService {
             int durMin = s.getDurationSeconds() == null ? 0 : (s.getDurationSeconds() / 60);
             int pomos = Math.max(1, durMin / 25);
             recents.add(new TrackerView.RecentSession(
+                    s.getId(),
+                    s.getCourse() != null ? s.getCourse().getId() : null,
+                    s.getTask() != null ? s.getTask().getId() : null,
                     when,
                     H_MM_A.format(startedAtTz),
                     s.getTitle(),
@@ -223,7 +227,10 @@ public class TrackerService {
                     s.getCourse() == null ? "" : formatters.pillClass(s.getCourse()),
                     s.getCourse() == null ? "" : s.getCourse().getCode(),
                     pomos,
-                    fmtHrsMins(durMin)
+                    fmtHrsMins(durMin),
+                    LocalDateTime.ofInstant(s.getStartedAt(), tz).toString(),
+                    durMin,
+                    s.getSessionType() != null ? s.getSessionType().name() : "WORK"
             ));
         }
 

@@ -67,9 +67,12 @@
         </a>
     </nav>
 
-    <section class="spaces-section" th:if="${sidebarCourses != null and !sidebarCourses.isEmpty()}">
-        <div class="section-label">Spaces</div>
-        <div class="spaces">
+    <section class="spaces-section" th:if="${sidebarCourses != null}">
+        <div class="section-label sidebar-section-head">
+            <span>Spaces</span>
+            <button class="add-mini" type="button" data-action="space-new" title="Add space">+</button>
+        </div>
+        <div class="spaces" th:if="${!sidebarCourses.isEmpty()}">
             <a class="space"
                th:each="course : ${sidebarCourses}"
                th:href="@{'/spaces/' + ${course.slug}}"
@@ -80,14 +83,31 @@
                 <span class="count"
                       th:if="${sidebarCourseCounts != null and sidebarCourseCounts[course.id] != null and sidebarCourseCounts[course.id] > 0}"
                       th:text="${sidebarCourseCounts[course.id]}">3</span>
+                <span class="space-menu" role="button" tabindex="0"
+                      data-action="space-menu"
+                      th:attr="data-course-id=${course.id},
+                               data-course-code=${course.code},
+                               data-course-name=${course.name},
+                               data-color-key=${course.colorKey.name()},
+                               data-color-variant=${course.colorVariant.name()},
+                               data-section=${course.section},
+                               data-term=${course.term},
+                               data-professor=${course.professor},
+                               data-room=${course.room},
+                               data-credits=${course.credits},
+                               data-description=${course.description}">⋯</span>
             </a>
         </div>
     </section>
 
-    <section class="tags" th:if="${sidebarTags != null and !sidebarTags.isEmpty()}">
-        <div class="section-label">Tags</div>
-        <ul class="tag-list">
-            <li class="tag" th:each="tag : ${sidebarTags}">
+    <section class="tags" th:if="${sidebarTags != null}">
+        <div class="section-label sidebar-section-head">
+            <span>Tags</span>
+            <button class="add-mini" type="button" data-action="tag-new" title="Add tag">+</button>
+        </div>
+        <ul class="tag-list" th:if="${!sidebarTags.isEmpty()}">
+            <li class="tag" th:each="tag : ${sidebarTags}"
+                th:attr="data-action='tag-menu', data-tag-id=${tag.id}, data-tag-name=${tag.name}">
                 <span class="tag-hash">#</span><span th:text="${tag.name}">tag</span>
             </li>
         </ul>
@@ -107,6 +127,171 @@
                 </svg>
             </button>
         </form>
+    </div>
+
+    <!-- Global modals (course / tag) — rendered inside the sidebar fragment so they ship with every authenticated page. -->
+    <div class="modal-backdrop" id="courseModalBackdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="courseModalTitle">
+            <div class="modal-head">
+                <h2 class="title" id="courseModalTitle">New space</h2>
+                <button class="close" data-modal-close type="button" aria-label="Close">×</button>
+            </div>
+            <form id="courseForm" autocomplete="off">
+                <div class="modal-body">
+                    <div class="form-error-banner"></div>
+
+                    <div class="field-row cols-2">
+                        <div class="field" data-field="code">
+                            <label for="courseCodeInput">Code</label>
+                            <input id="courseCodeInput" name="code" type="text" required maxlength="32" placeholder="PHYS 211"/>
+                            <span class="err"></span>
+                        </div>
+                        <div class="field" data-field="name">
+                            <label for="courseNameInput">Name</label>
+                            <input id="courseNameInput" name="name" type="text" required maxlength="200" placeholder="Classical Mechanics"/>
+                            <span class="err"></span>
+                        </div>
+                    </div>
+
+                    <div class="field" data-field="colorKey">
+                        <label>Color</label>
+                        <input type="hidden" name="colorKey" value="OTHER"/>
+                        <input type="hidden" name="colorVariant" value="DEFAULT"/>
+                        <div class="color-picker">
+                            <button type="button" class="color-swatch" data-color-key="PHYSICS" data-color-variant="DEFAULT" title="Physics">
+                                <span class="dot" style="background: linear-gradient(135deg, var(--phys-a), var(--phys-b));"></span>
+                            </button>
+                            <button type="button" class="color-swatch" data-color-key="PHYSICS" data-color-variant="DEEP" title="Physics (deep)">
+                                <span class="dot" style="background: linear-gradient(135deg, #c46442, #e89070);"></span>
+                            </button>
+                            <button type="button" class="color-swatch" data-color-key="CS" data-color-variant="DEFAULT" title="Computer Science">
+                                <span class="dot" style="background: linear-gradient(135deg, var(--cs-a), var(--cs-b));"></span>
+                            </button>
+                            <button type="button" class="color-swatch" data-color-key="ENG" data-color-variant="DEFAULT" title="Engineering / English">
+                                <span class="dot" style="background: linear-gradient(135deg, var(--eng-a), var(--eng-b));"></span>
+                            </button>
+                            <button type="button" class="color-swatch" data-color-key="PHIL" data-color-variant="DEFAULT" title="Philosophy">
+                                <span class="dot" style="background: linear-gradient(135deg, var(--phil-a), var(--phil-b));"></span>
+                            </button>
+                            <button type="button" class="color-swatch" data-color-key="OTHER" data-color-variant="DEFAULT" title="Other">
+                                <span class="dot" style="background: linear-gradient(135deg, var(--ink-3), var(--ink-faint));"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="field-row cols-2">
+                        <div class="field" data-field="section">
+                            <label for="courseSectionInput">Section</label>
+                            <input id="courseSectionInput" name="section" type="text" maxlength="64" placeholder="Section 02"/>
+                            <span class="err"></span>
+                        </div>
+                        <div class="field" data-field="term">
+                            <label for="courseTermInput">Term</label>
+                            <input id="courseTermInput" name="term" type="text" maxlength="64" placeholder="Spring 2026"/>
+                            <span class="err"></span>
+                        </div>
+                    </div>
+
+                    <div class="field" data-field="professor">
+                        <label for="courseProfInput">Instructor</label>
+                        <input id="courseProfInput" name="professor" type="text" maxlength="200" placeholder="Prof. Marian Hewitt"/>
+                        <span class="err"></span>
+                    </div>
+
+                    <div class="field-row cols-2">
+                        <div class="field" data-field="room">
+                            <label for="courseRoomInput">Default room</label>
+                            <input id="courseRoomInput" name="room" type="text" maxlength="200" placeholder="Hewitt Hall 204"/>
+                            <span class="err"></span>
+                        </div>
+                        <div class="field" data-field="credits">
+                            <label for="courseCreditsInput">Credits</label>
+                            <input id="courseCreditsInput" name="credits" type="number" min="0" max="20" placeholder="4"/>
+                            <span class="err"></span>
+                        </div>
+                    </div>
+
+                    <div class="field" data-field="description">
+                        <label for="courseDescInput">Description</label>
+                        <textarea id="courseDescInput" name="description" maxlength="2000" placeholder="One-paragraph summary."></textarea>
+                        <span class="err"></span>
+                    </div>
+
+                    <div class="field">
+                        <label>Weekly schedule</label>
+                        <div class="schedule-rows" id="scheduleRows">
+                            <div class="sched-row" data-template style="display: none;">
+                                <select name="scheduleDays">
+                                    <option value="1">Mon</option><option value="2">Tue</option><option value="3">Wed</option>
+                                    <option value="4">Thu</option><option value="5">Fri</option><option value="6">Sat</option><option value="7">Sun</option>
+                                </select>
+                                <input name="scheduleStartTimes" type="time" placeholder="10:00"/>
+                                <input name="scheduleDurations" type="number" min="0" max="720" placeholder="50"/>
+                                <input name="scheduleTitles" type="text" placeholder="Lecture" maxlength="200"/>
+                                <input name="scheduleLocations" type="text" placeholder="Room"/>
+                                <select name="scheduleTypes">
+                                    <option value="LECTURE">Lecture</option>
+                                    <option value="LAB">Lab</option>
+                                    <option value="TUTORIAL">Tutorial</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                                <input name="scheduleIds" type="hidden" value=""/>
+                                <button type="button" class="sched-remove" aria-label="Remove">×</button>
+                            </div>
+                        </div>
+                        <button type="button" class="add-sched" id="addScheduleRow">+ Add lecture/lab</button>
+                    </div>
+                </div>
+
+                <div class="modal-foot">
+                    <button type="button" class="btn-ghost" data-modal-close>Cancel</button>
+                    <button type="button" class="danger" id="courseDeleteBtn" style="display: none;">Delete space</button>
+                    <span class="spacer"></span>
+                    <button type="submit" class="btn-primary"
+                            data-submit-label-create="Create space"
+                            data-submit-label-update="Save changes">Create space</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal-backdrop" id="tagModalBackdrop">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="tagModalTitle" style="width: min(360px, calc(100vw - 32px));">
+            <div class="modal-head">
+                <h2 class="title" id="tagModalTitle">New tag</h2>
+                <button class="close" data-modal-close type="button" aria-label="Close">×</button>
+            </div>
+            <form id="tagForm" autocomplete="off">
+                <div class="modal-body">
+                    <div class="form-error-banner"></div>
+                    <div class="field" data-field="name">
+                        <label for="tagNameInput">Name</label>
+                        <input id="tagNameInput" name="name" type="text" required maxlength="40" placeholder="midterm"/>
+                        <span class="err"></span>
+                        <span class="hint">No spaces or # — keep it short.</span>
+                    </div>
+                </div>
+                <div class="modal-foot">
+                    <button type="button" class="btn-ghost" data-modal-close>Cancel</button>
+                    <span class="spacer"></span>
+                    <button type="submit" class="btn-primary"
+                            data-submit-label-create="Create tag"
+                            data-submit-label-update="Save">Create tag</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row-menu" id="spaceRowMenu">
+        <button data-menu-action="edit" type="button">✎ Edit</button>
+        <hr/>
+        <button data-menu-action="delete" type="button" class="danger">🗑 Delete</button>
+    </div>
+
+    <div class="row-menu" id="tagRowMenu">
+        <button data-menu-action="rename" type="button">✎ Rename</button>
+        <hr/>
+        <button data-menu-action="delete" type="button" class="danger">🗑 Delete</button>
     </div>
 </aside>
 </body>

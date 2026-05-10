@@ -33,8 +33,7 @@ public class ExamsController {
         String safe = VALID_FILTERS.contains(filter) ? filter : "upcoming";
         model.addAttribute("exams", examsService.buildFor(user, safe));
         model.addAttribute("pageTitle", "Exams · StudySyncer");
-        model.addAttribute("extraCss", List.of("/css/modal.css"));
-        model.addAttribute("extraJs", List.of("/js/modal.js", "/js/exams.js"));
+        model.addAttribute("extraJs", List.of("/js/exams.js"));
         return "exams";
     }
 }

@@ -35,8 +35,7 @@ public class TasksController {
         String safe = VALID_FILTERS.contains(filter) ? filter : "all";
         model.addAttribute("tasks", tasksService.buildFor(user, safe));
         model.addAttribute("pageTitle", "Tasks · StudySyncer");
-        model.addAttribute("extraCss", List.of("/css/modal.css"));
-        model.addAttribute("extraJs", List.of("/js/modal.js", "/js/tasks.js"));
+        model.addAttribute("extraJs", List.of("/js/tasks.js"));
         return "tasks";
     }
 

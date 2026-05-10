@@ -1,9 +1,12 @@
 package com.studysyncer.backend.service;
 
+import com.studysyncer.backend.domain.ColorKey;
+import com.studysyncer.backend.domain.ColorVariant;
 import com.studysyncer.backend.domain.Course;
 import com.studysyncer.backend.domain.Exam;
 import com.studysyncer.backend.domain.ExamStatus;
 import com.studysyncer.backend.domain.ScheduleItem;
+import com.studysyncer.backend.domain.ScheduleItemType;
 import com.studysyncer.backend.domain.StudySession;
 import com.studysyncer.backend.domain.Task;
 import com.studysyncer.backend.domain.TaskStatus;
@@ -13,8 +16,12 @@ import com.studysyncer.backend.repository.ExamRepository;
 import com.studysyncer.backend.repository.ScheduleItemRepository;
 import com.studysyncer.backend.repository.StudySessionRepository;
 import com.studysyncer.backend.repository.TaskRepository;
+import com.studysyncer.backend.web.api.dto.CourseCreateRequest;
+import com.studysyncer.backend.web.api.dto.ScheduleItemRequest;
+import com.studysyncer.backend.web.util.Inputs;
 import com.studysyncer.backend.web.view.Formatters;
 import com.studysyncer.backend.web.view.SpacesView;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,11 +36,14 @@ import java.time.format.TextStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class SpacesService {
@@ -211,6 +221,122 @@ public class SpacesService {
                 timeInvested,
                 schedule
         ));
+    }
+
+    @Transactional
+    public Course createCourse(User user, CourseCreateRequest req, List<ScheduleItemRequest> schedule) {
+        String code = req.getCode().trim();
+        if (courseRepository.findByUserAndCode(user, code).isPresent()) {
+            throw new IllegalArgumentException("A course with code '" + code + "' already exists");
+        }
+        int nextOrder = courseRepository.findByUserOrderByDisplayOrderAsc(user).size();
+
+        Course c = new Course();
+        c.setUser(user);
+        apply(c, req);
+        c.setDisplayOrder(nextOrder);
+        c = courseRepository.save(c);
+        replaceScheduleItems(c, schedule);
+        return c;
+    }
+
+    @Transactional
+    public Course updateCourse(User user, Long id, CourseCreateRequest req, List<ScheduleItemRequest> schedule) {
+        Course c = courseRepository.findById(id)
+                .filter(x -> x.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new AccessDeniedException("Not your course"));
+
+        String newCode = req.getCode().trim();
+        if (!c.getCode().equals(newCode)) {
+            courseRepository.findByUserAndCode(user, newCode).ifPresent(existing -> {
+                throw new IllegalArgumentException("A course with code '" + newCode + "' already exists");
+            });
+        }
+        apply(c, req);
+        courseRepository.save(c);
+        if (schedule != null) {
+            replaceScheduleItems(c, schedule);
+        }
+        return c;
+    }
+
+    @Transactional
+    public void deleteCourse(User user, Long id) {
+        Course c = courseRepository.findById(id)
+                .filter(x -> x.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new AccessDeniedException("Not your course"));
+        // FK constraints (V1):
+        //   tasks.course_id      → ON DELETE SET NULL  (tasks survive, attribution dropped)
+        //   exams.course_id      → ON DELETE CASCADE   (exams + topics removed)
+        //   study_sessions       → ON DELETE CASCADE   (sessions removed)
+        //   schedule_items       → ON DELETE CASCADE   (schedule rows removed)
+        courseRepository.delete(c);
+    }
+
+    private void apply(Course c, CourseCreateRequest req) {
+        c.setCode(req.getCode().trim());
+        c.setName(req.getName().trim());
+        c.setColorKey(req.getColorKey() != null ? req.getColorKey() : ColorKey.OTHER);
+        c.setColorVariant(req.getColorVariant() != null ? req.getColorVariant() : ColorVariant.DEFAULT);
+        c.setSection(Inputs.blankToNull(req.getSection()));
+        c.setTerm(Inputs.blankToNull(req.getTerm()));
+        c.setProfessor(Inputs.blankToNull(req.getProfessor()));
+        c.setRoom(Inputs.blankToNull(req.getRoom()));
+        c.setCredits(req.getCredits());
+        c.setDescription(Inputs.blankToNull(req.getDescription()));
+    }
+
+    /** Replace schedule items: keep matching ids (updated in place), insert new ones, delete dropped ones. */
+    private void replaceScheduleItems(Course c, List<ScheduleItemRequest> incoming) {
+        if (incoming == null) incoming = List.of();
+        List<ScheduleItem> existing = scheduleItemRepository.findByCourseOrderByDayOfWeekAscStartMinuteAsc(c);
+        Map<Long, ScheduleItem> byId = existing.stream()
+                .filter(s -> s.getId() != null)
+                .collect(Collectors.toMap(ScheduleItem::getId, s -> s));
+
+        Set<Long> keptIds = new HashSet<>();
+        int order = 0;
+        for (ScheduleItemRequest req : incoming) {
+            // Skip rows where required fields are absent (e.g. an empty cloned row the user added then ignored)
+            if (req.getTitle() == null || req.getTitle().isBlank()) continue;
+            if (req.getDayOfWeek() == null) continue;
+            if (req.getStartTimeLocal() == null || req.getStartTimeLocal().isBlank()) continue;
+
+            ScheduleItem item = req.getId() != null ? byId.get(req.getId()) : null;
+            if (item == null) {
+                item = new ScheduleItem();
+                item.setCourse(c);
+                item.setCreatedAt(Instant.now());
+            }
+            item.setTitle(req.getTitle().trim());
+            item.setLocation(Inputs.blankToNull(req.getLocation()));
+            item.setDayOfWeek(req.getDayOfWeek());
+            item.setStartMinute(parseTimeToMinutes(req.getStartTimeLocal()));
+            item.setDurationMinutes(req.getDurationMinutes());
+            item.setItemType(req.getItemType() != null ? req.getItemType() : ScheduleItemType.LECTURE);
+            item.setDisplayOrder(order++);
+            item = scheduleItemRepository.save(item);
+            keptIds.add(item.getId());
+        }
+        for (ScheduleItem old : existing) {
+            if (!keptIds.contains(old.getId())) {
+                scheduleItemRepository.delete(old);
+            }
+        }
+    }
+
+    private static int parseTimeToMinutes(String hhmm) {
+        if (hhmm == null || hhmm.isBlank()) throw new IllegalArgumentException("Time is required");
+        String[] parts = hhmm.split(":");
+        if (parts.length < 2) throw new IllegalArgumentException("Time must be HH:mm");
+        try {
+            int h = Integer.parseInt(parts[0]);
+            int m = Integer.parseInt(parts[1]);
+            if (h < 0 || h > 23 || m < 0 || m > 59) throw new IllegalArgumentException("Invalid time");
+            return h * 60 + m;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid time");
+        }
     }
 
     private SpacesView.OpenTask buildOpenTask(Task t, LocalDate today, ZoneId tz) {

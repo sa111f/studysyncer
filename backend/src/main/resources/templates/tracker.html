@@ -27,11 +27,10 @@
                     <span th:text="'Week of ' + ${tracker.weekRangeLabel}">Week of May 4 – 10, 2026</span>
                 </div>
                 <div class="right">
-                    <button class="new-btn" type="button" disabled title="Coming soon">
+                    <button class="new-btn" type="button" data-action="session-new">
                         <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3v10M3 8h10"></path></svg>
                         Log session
                         <span class="kbd">L</span>
-                        <span class="soon">soon</span>
                     </button>
                 </div>
             </div>
@@ -153,6 +152,18 @@
                             <span class="pomo f" th:each="i : ${#numbers.sequence(1, rs.pomoCount)}"></span>
                         </div>
                         <div class="dur" th:text="${rs.durationLabel}">1h 12m</div>
+                        <button class="row-menu-trig" type="button"
+                                th:attr="data-action='session-menu',
+                                         data-session-id=${rs.id},
+                                         data-course-id=${rs.courseId},
+                                         data-task-id=${rs.taskId},
+                                         data-title=${rs.title},
+                                         data-italic=${rs.italicSuffix},
+                                         data-started=${rs.startedAtLocal},
+                                         data-duration=${rs.durationMinutes},
+                                         data-pomos=${rs.pomoCount},
+                                         data-type=${rs.sessionType}"
+                                aria-label="Session actions">⋯</button>
                     </div>
                 </div>
             </section>
@@ -187,7 +198,9 @@
                 <div class="label">Today's goal</div>
                 <div class="goal">
                     <div class="goal-row">
-                        <div class="donut">
+                        <div class="donut" data-action="goal-edit"
+                             th:attr="data-current=${tracker.goal.dailyGoalMinutes}"
+                             title="Click to edit daily target" style="cursor: pointer;">
                             <svg viewBox="0 0 100 100">
                                 <circle class="t" cx="50" cy="50" r="42"/>
                                 <circle class="p" cx="50" cy="50" r="42" stroke-dasharray="264"
@@ -228,6 +241,94 @@
     </main>
 
 </div>
+
+<div class="modal-backdrop" id="sessionModalBackdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sessionModalTitle">
+        <div class="modal-head">
+            <h2 class="title" id="sessionModalTitle">Log session</h2>
+            <button class="close" data-modal-close type="button" aria-label="Close">×</button>
+        </div>
+        <form id="sessionForm" autocomplete="off">
+            <div class="modal-body">
+                <div class="form-error-banner"></div>
+
+                <div class="field" data-field="title">
+                    <label for="sessTitleInput">What were you working on?</label>
+                    <input id="sessTitleInput" name="title" type="text" required maxlength="200" placeholder="Problem set 3"/>
+                    <span class="err"></span>
+                </div>
+
+                <div class="field" data-field="italicSuffix">
+                    <label for="sessItalicInput">Italic note (optional)</label>
+                    <input id="sessItalicInput" name="italicSuffix" type="text" maxlength="200" placeholder="recursion"/>
+                    <span class="err"></span>
+                </div>
+
+                <div class="field" data-field="courseId">
+                    <label>Course</label>
+                    <input type="hidden" name="courseId"/>
+                    <div class="course-picker" data-target="courseId">
+                        <button type="button" class="course-pick" th:each="c, cIt : ${sidebarCourses}"
+                                th:attr="data-course-id=${c.id}"
+                                th:classappend="${cIt.first} ? 'selected' : ''">
+                            <span class="dot" th:style="'background: ' + ${fmt.dotGradient(c)} + ';'"></span>
+                            <span th:text="${c.code}"></span>
+                        </button>
+                    </div>
+                    <span class="err"></span>
+                </div>
+
+                <div class="field-row cols-2">
+                    <div class="field" data-field="startedAtLocal">
+                        <label for="sessStartInput">When?</label>
+                        <input id="sessStartInput" name="startedAtLocal" type="datetime-local" required/>
+                        <span class="err"></span>
+                    </div>
+                    <div class="field" data-field="durationMinutes">
+                        <label for="sessDurInput">Duration (min)</label>
+                        <input id="sessDurInput" name="durationMinutes" type="number" min="1" max="720" required placeholder="50"/>
+                        <span class="err"></span>
+                    </div>
+                </div>
+
+                <div class="field-row cols-2">
+                    <div class="field" data-field="completedPomodoros">
+                        <label for="sessPomosInput">Completed pomodoros</label>
+                        <input id="sessPomosInput" name="completedPomodoros" type="number" min="0" max="48" placeholder="auto (1 per 25 min)"/>
+                        <span class="err"></span>
+                        <span class="hint">Leave blank to auto-derive.</span>
+                    </div>
+                    <div class="field" data-field="sessionType">
+                        <label>Type</label>
+                        <select name="sessionType">
+                            <option value="WORK">Work</option>
+                            <option value="BREAK">Break</option>
+                        </select>
+                    </div>
+                </div>
+
+                <input type="hidden" name="taskId" value=""/>
+            </div>
+
+            <div class="modal-foot">
+                <button type="button" class="btn-ghost" data-modal-close>Cancel</button>
+                <button type="button" class="danger" id="sessionDeleteBtn" style="display: none;">Delete session</button>
+                <span class="spacer"></span>
+                <button type="submit" class="btn-primary"
+                        data-submit-label-create="Log session"
+                        data-submit-label-update="Save changes">Log session</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row-menu" id="sessionRowMenu">
+    <button data-menu-action="edit" type="button">✎ Edit</button>
+    <hr/>
+    <button data-menu-action="delete" type="button" class="danger">🗑 Delete</button>
+</div>
+
+<th:block th:replace="~{fragments/goal-modal :: goalModal}"></th:block>
 
 </body>
 </html>

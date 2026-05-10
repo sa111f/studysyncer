@@ -9,6 +9,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 @Controller
 public class TrackerController {
 
@@ -28,6 +30,7 @@ public class TrackerController {
         String safe = "week"; // only week supported in this prompt
         model.addAttribute("tracker", trackerService.buildFor(user, safe));
         model.addAttribute("pageTitle", "Tracker · StudySyncer");
+        model.addAttribute("extraJs", List.of("/js/today.js", "/js/tracker.js"));
         return "tracker";
     }
 }
